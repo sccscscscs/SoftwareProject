@@ -1,0 +1,203 @@
+package com.myapp;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * AI对话服务
+ * 接入免费的中国AI API（智谱AI - ChatGLM）
+ * 
+ * 使用说明：
+ * 1. 访问 https://open.bigmodel.cn/ 注册账号
+ * 2. 获取API Key
+ * 3. 将API Key设置到系统环境变量 ZHIPU_AI_KEY 或直接修改 API_KEY 常量
+ * 
+ * 注意：本实现使用简化的HTTP请求，实际生产环境建议使用官方SDK
+ */
+public class AIService {
+    
+    // 智谱AI API配置
+    private static final String API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+    private static String API_KEY = System.getenv("ZHIPU_AI_KEY"); // 从环境变量读取
+    
+    // 如果环境变量未设置，可以直接在这里填写API Key（不推荐，仅用于测试）
+    static {
+        if (API_KEY == null || API_KEY.isEmpty()) {
+            // 警告：请不要将API Key提交到代码仓库！
+            API_KEY = "your-api-key-here";
+        }
+    }
+    
+    /**
+     * 发送对话请求到AI服务
+     * @param userMessage 用户输入的消息
+     * @return AI的回复
+     */
+    public String chat(String userMessage) {
+        // 如果API Key未配置，返回友好提示
+        if (API_KEY == null || API_KEY.equals("your-api-key-here") || API_KEY.isEmpty()) {
+            return "AI功能需要配置API Key。\n\n" +
+                   "请访问 https://open.bigmodel.cn/ 注册并获取免费API Key，\n" +
+                   "然后设置环境变量 ZHIPU_AI_KEY 或修改 AIService.java 中的 API_KEY。\n\n" +
+                   "【模拟回复】您说：" + userMessage + "\n" +
+                   "这是一个模拟回复，配置API Key后将获得真实的AI对话功能。";
+        }
+        
+        try {
+            // 构建请求JSON（使用GLM-4-Flash免费模型）
+            String requestBody = buildRequestJson(userMessage);
+            
+            // 发送HTTP请求
+            HttpURLConnection connection = createConnection();
+            sendRequest(connection, requestBody);
+            
+            // 读取响应
+            String response = readResponse(connection);
+            
+            // 解析响应JSON
+            return parseResponse(response);
+            
+        } catch (Exception e) {
+            return "AI服务调用失败：" + e.getMessage() + "\n\n" +
+                   "可能的原因：\n" +
+                   "1. 网络连接问题\n" +
+                   "2. API Key配置错误\n" +
+                   "3. API调用限额已用完\n\n" +
+                   "请检查网络连接和API配置。";
+        }
+    }
+    
+    /**
+     * 构建请求JSON
+     */
+    private String buildRequestJson(String userMessage) {
+        // 使用GLM-4-Flash模型（免费且响应快）
+        return String.format(
+            "{\n" +
+            "  \"model\": \"glm-4-flash\",\n" +
+            "  \"messages\": [\n" +
+            "    {\n" +
+            "      \"role\": \"user\",\n" +
+            "      \"content\": \"%s\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}",
+            escapeJson(userMessage)
+        );
+    }
+    
+    /**
+     * 创建HTTP连接
+     */
+    private HttpURLConnection createConnection() throws IOException {
+        URL url = new URL(API_URL);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Authorization", "Bearer " + API_KEY);
+        connection.setDoOutput(true);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(30000);
+        return connection;
+    }
+    
+    /**
+     * 发送HTTP请求
+     */
+    private void sendRequest(HttpURLConnection connection, String requestBody) throws IOException {
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = requestBody.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+    }
+    
+    /**
+     * 读取HTTP响应
+     */
+    private String readResponse(HttpURLConnection connection) throws IOException {
+        int responseCode = connection.getResponseCode();
+        
+        InputStream inputStream;
+        if (responseCode >= 200 && responseCode < 300) {
+            inputStream = connection.getInputStream();
+        } else {
+            inputStream = connection.getErrorStream();
+        }
+        
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        }
+    }
+    
+    /**
+     * 解析响应JSON（简单实现，提取content字段）
+     */
+    private String parseResponse(String jsonResponse) {
+        // 简单的JSON解析（生产环境建议使用JSON库如Gson或Jackson）
+        try {
+            // 查找 "content": "..." 部分
+            int contentStart = jsonResponse.indexOf("\"content\"");
+            if (contentStart == -1) {
+                // 尝试查找错误信息
+                int errorStart = jsonResponse.indexOf("\"error\"");
+                if (errorStart != -1) {
+                    return "API返回错误：" + jsonResponse;
+                }
+                return "无法解析AI响应：" + jsonResponse;
+            }
+            
+            contentStart = jsonResponse.indexOf(":", contentStart) + 1;
+            contentStart = jsonResponse.indexOf("\"", contentStart) + 1;
+            int contentEnd = jsonResponse.indexOf("\"", contentStart);
+            
+            // 处理转义字符
+            String content = jsonResponse.substring(contentStart, contentEnd);
+            content = unescapeJson(content);
+            
+            return content;
+            
+        } catch (Exception e) {
+            return "解析AI响应失败：" + e.getMessage() + "\n响应内容：" + jsonResponse;
+        }
+    }
+    
+    /**
+     * JSON字符串转义
+     */
+    private String escapeJson(String str) {
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
+    }
+    
+    /**
+     * JSON字符串反转义
+     */
+    private String unescapeJson(String str) {
+        return str.replace("\\n", "\n")
+                  .replace("\\r", "\r")
+                  .replace("\\t", "\t")
+                  .replace("\\\"", "\"")
+                  .replace("\\\\", "\\");
+    }
+    
+    /**
+     * 测试方法
+     */
+    public static void main(String[] args) {
+        AIService service = new AIService();
+        String response = service.chat("你好，请介绍一下Java编程语言。");
+        System.out.println("AI回复：\n" + response);
+    }
+}
+
