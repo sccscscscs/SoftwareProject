@@ -3,6 +3,7 @@ package com.myapp;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
  * 
  * 功能说明：
  * 1. 点击唐老鸭：弹出对话框，用户可以输入需求
- *    - 输入包含"代码量"：进入代码统计功能（支持Java/Python/C/C++）
+ *    - 输入包含"代码量"：进入代码统计功能（支持Java/Python/C/C++/C#）
  *    - 输入包含"红包雨"：启动红包雨游戏
  *    - 其他输入：调用AI对话服务
  * 
@@ -25,6 +26,9 @@ import java.util.List;
 public class DuckGUI extends JFrame {
     private final List<DuckComponent> ducks = new ArrayList<>();
     private AIService aiService;
+    private CodeStatsHandler codeStatsHandler;
+    private ExportHandler exportHandler;
+    private DuckComponent selectedDuck = null; // 当前选中的小鸭子
     
     public DuckGUI() {
         setTitle("🦆 唐老鸭和小鸭子 - 多功能应用");
@@ -32,10 +36,16 @@ public class DuckGUI extends JFrame {
         setSize(1000, 700);
         setLocationRelativeTo(null);
         
-        // 初始化AI服务
+        // 初始化服务
         aiService = new AIService();
+        codeStatsHandler = new CodeStatsHandler(this);
+        exportHandler = new ExportHandler(this);
         
         initUI();
+    }
+    
+    public ExportHandler getExportHandler() {
+        return exportHandler;
     }
     
     private void initUI() {
@@ -52,26 +62,33 @@ public class DuckGUI extends JFrame {
                 
                 // 清新的渐变背景
                 GradientPaint bgGradient = new GradientPaint(
-                    0, 0, new Color(230, 240, 255),
-                    0, h, new Color(255, 250, 240)
+                    0, 0, new Color(175, 220, 255),
+                    0, h, new Color(255, 240, 200)
                 );
                 g2d.setPaint(bgGradient);
                 g2d.fillRect(0, 0, w, h);
                 
-                // 绘制舞台地板
-                g2d.setColor(new Color(210, 180, 140, 100));
-                g2d.fillRoundRect(100, h - 150, w - 200, 120, 20, 20);
+                // 绘制云朵装饰
+                g2d.setColor(new Color(255, 255, 255, 180));
+                for (int i = 0; i < 3; i++) {
+                    int x = 100 + i * 300;
+                    int y = 50 + (i % 2) * 30;
+                    g2d.fillOval(x, y, 60, 30);
+                    g2d.fillOval(x + 10, y - 10, 40, 40);
+                    g2d.fillOval(x + 30, y - 5, 50, 35);
+                }
                 
-                // 地板光泽
-                g2d.setColor(new Color(255, 255, 255, 50));
-                g2d.fillRoundRect(120, h - 140, w - 240, 30, 15, 15);
+                // 绘制草地
+                g2d.setColor(new Color(150, 220, 100, 120));
+                int grassHeight = 80;
+                g2d.fillRoundRect(0, h - grassHeight, w, grassHeight, 0, 0);
                 
-                // 装饰性圆点
-                g2d.setColor(new Color(100, 149, 237, 50));
-                for (int i = 0; i < 5; i++) {
-                    int x = 150 + i * 150;
-                    int y = 80 + (i % 2) * 30;
-                    g2d.fillOval(x, y, 40, 40);
+                // 绘制草叶细节
+                g2d.setColor(new Color(120, 200, 80));
+                g2d.setStroke(new BasicStroke(1));
+                for (int i = 0; i < w; i += 15) {
+                    int height = 10 + (i % 3) * 5;
+                    g2d.drawLine(i, h - grassHeight, i, h - grassHeight - height);
                 }
                 
                 // 标题
@@ -84,13 +101,16 @@ public class DuckGUI extends JFrame {
                 
                 // 副标题
                 g2d.setFont(new Font("SansSerif", Font.PLAIN, 14));
-                g2d.setColor(new Color(120, 120, 120));
+                g2d.setColor(new Color(100, 100, 100));
                 String subtitle = "点击唐老鸭体验功能 | 点击小鸭子换装打扮";
                 int subWidth = g2d.getFontMetrics().stringWidth(subtitle);
                 g2d.drawString(subtitle, (w - subWidth) / 2, 75);
             }
         };
-        mainPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 120));
+        
+        // 使用GridBagLayout实现自适应布局
+        mainPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
         
         // 创建唐老鸭
         DuckComponent donaldDuck = new DuckComponent("唐老鸭", true);
@@ -99,6 +119,7 @@ public class DuckGUI extends JFrame {
         donaldDuck.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // 唐老鸭点击直接显示输入对话框
                 showInputDialog();
             }
             
@@ -112,8 +133,18 @@ public class DuckGUI extends JFrame {
                 donaldDuck.setBorder(null);
             }
         });
-        mainPanel.add(donaldDuck);
+        
+        // 设置唐老鸭约束
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 0, 50); // 右边距
+        gbc.anchor = GridBagConstraints.CENTER;
+        mainPanel.add(donaldDuck, gbc);
         ducks.add(donaldDuck);
+        
+        // 创建一个小鸭子容器面板，用于水平排列三只小鸭子
+        JPanel duckRowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0)); // 将间距从30减小到10
+        duckRowPanel.setOpaque(false);
         
         // 创建三只小鸭子
         String[] duckNames = {"小鸭1号", "小鸭2号", "小鸭3号"};
@@ -121,9 +152,19 @@ public class DuckGUI extends JFrame {
             DuckComponent duck = new DuckComponent(duckNames[i], false);
             duck.setCursor(new Cursor(Cursor.HAND_CURSOR));
             duck.setToolTipText("点击我可以换装打扮！");
+            final int index = i; // 保存索引用于事件处理
             duck.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
+                    // 取消之前选中鸭子的选中状态
+                    if (selectedDuck != null) {
+                        selectedDuck.setSelected(false);
+                    }
+                    // 设置当前鸭子为选中状态
+                    duck.setSelected(true);
+                    selectedDuck = duck;
+                    
+                    // 显示换装对话框
                     showDressUpDialog(duck);
                 }
                 
@@ -134,12 +175,21 @@ public class DuckGUI extends JFrame {
                 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    duck.setBorder(null);
+                    if (selectedDuck != duck) { // 如果不是当前选中的鸭子才移除边框
+                        duck.setBorder(null);
+                    }
                 }
             });
-            mainPanel.add(duck);
+            duckRowPanel.add(duck);
             ducks.add(duck);
         }
+        
+        // 设置小鸭子行约束
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.anchor = GridBagConstraints.CENTER;
+        mainPanel.add(duckRowPanel, gbc);
         
         add(mainPanel);
     }
@@ -154,6 +204,10 @@ public class DuckGUI extends JFrame {
         textArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(textArea);
         
+        // 美化对话框
+        textArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        textArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         Object[] message = {
             "请输入您的需求：",
             "• 输入\"代码量\"进行代码统计",
@@ -162,15 +216,24 @@ public class DuckGUI extends JFrame {
             scrollPane
         };
         
-        int option = JOptionPane.showConfirmDialog(
-            this, 
+        // 创建自定义对话框
+        JOptionPane optionPane = new JOptionPane(
             message, 
-            "唐老鸭对话框", 
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.PLAIN_MESSAGE
+            JOptionPane.QUESTION_MESSAGE, 
+            JOptionPane.OK_CANCEL_OPTION
         );
         
-        if (option == JOptionPane.OK_OPTION) {
+        JDialog dialog = optionPane.createDialog(this, "唐老鸭对话框");
+        dialog.setSize(400, 250);
+        dialog.setLocationRelativeTo(this);
+        
+        // 美化对话框
+        dialog.setBackground(new Color(240, 248, 255));
+        
+        dialog.setVisible(true);
+        
+        Object value = optionPane.getValue();
+        if (value != null && value.equals(JOptionPane.OK_OPTION)) {
             String input = textArea.getText().trim();
             if (!input.isEmpty()) {
                 processUserRequest(input);
@@ -185,7 +248,7 @@ public class DuckGUI extends JFrame {
     private void processUserRequest(String request) {
         // 检测代码统计需求
         if (CodeStatsService.isCodeStatIntent(request)) {
-            showLanguageSelection();
+            codeStatsHandler.showLanguageSelection();
         } 
         // 检测红包雨需求
         else if (request.contains("红包雨") || request.contains("红包")) {
@@ -220,8 +283,17 @@ public class DuckGUI extends JFrame {
         JDialog progressDialog = new JDialog(this, "AI思考中", true);
         JProgressBar progressBar = new JProgressBar();
         progressBar.setIndeterminate(true);
-        progressDialog.add(new JLabel("AI正在思考，请稍候..."), BorderLayout.NORTH);
-        progressDialog.add(progressBar, BorderLayout.CENTER);
+        
+        // 美化进度对话框
+        JLabel progressLabel = new JLabel("AI正在思考，请稍候...", JLabel.CENTER);
+        progressLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        
+        JPanel progressPanel = new JPanel(new BorderLayout(10, 10));
+        progressPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        progressPanel.add(progressLabel, BorderLayout.NORTH);
+        progressPanel.add(progressBar, BorderLayout.CENTER);
+        
+        progressDialog.add(progressPanel);
         progressDialog.setSize(300, 100);
         progressDialog.setLocationRelativeTo(this);
         
@@ -245,8 +317,12 @@ public class DuckGUI extends JFrame {
                     responseArea.setWrapStyleWord(true);
                     responseArea.setRows(15);
                     responseArea.setColumns(40);
+                    responseArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
+                    responseArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
                     
                     JScrollPane scrollPane = new JScrollPane(responseArea);
+                    scrollPane.setPreferredSize(new Dimension(500, 300));
+                    
                     JOptionPane.showMessageDialog(
                         DuckGUI.this, 
                         scrollPane, 
@@ -269,377 +345,52 @@ public class DuckGUI extends JFrame {
     }
     
     /**
-     * 显示语言选择对话框
-     * 支持Java、Python、C、C++四种语言
-     */
-    private void showLanguageSelection() {
-        String[] options = {"Java", "Python", "C", "C++"};
-        int choice = JOptionPane.showOptionDialog(
-            this,
-            "请选择编程语言：",
-            "语言选择",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-        
-        if (choice != JOptionPane.CLOSED_OPTION) {
-            CodeStatsCore.Language language = switch (choice) {
-                case 0 -> CodeStatsCore.Language.JAVA;
-                case 1 -> CodeStatsCore.Language.PYTHON;
-                case 2 -> CodeStatsCore.Language.C;
-                case 3 -> CodeStatsCore.Language.CPP;
-                case 4 -> CodeStatsCore.Language.CSHARP;
-                default -> null;
-            };
-            
-            if (language != null) {
-                showStatModeSelection(language);
-            }
-        }
-    }
-    
-    /**
-     * 显示统计模式选择对话框
-     * 两种模式：代码量统计 或 函数长度统计
-     */
-    private void showStatModeSelection(CodeStatsCore.Language language) {
-        String[] options = {"代码量统计", "函数长度统计"};
-        int choice = JOptionPane.showOptionDialog(
-            this,
-            "请选择统计模式：\n\n" +
-            "• 代码量统计：统计文件数、代码行数、注释行数\n" +
-            "• 函数长度统计：统计函数的均值、最大值、最小值、中位数",
-            "统计模式选择",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-        
-        if (choice != JOptionPane.CLOSED_OPTION) {
-            int mode = (choice == 0) ? 
-                CodeStatsService.MODE_CODE_METRICS : 
-                CodeStatsService.MODE_FUNCTION_LENGTH;
-            showFileSelectionDialog(language, mode);
-        }
-    }
-    
-    /**
-     * 显示文件选择对话框
-     */
-    private void showFileSelectionDialog(CodeStatsCore.Language language, int mode) {
-        // 创建文件选择对话框
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("选择 " + language + " 文件或目录");
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        
-        // 设置文件过滤器
-        javax.swing.filechooser.FileFilter filter = createFileFilter(language);
-        if (filter != null) {
-            fileChooser.setFileFilter(filter);
-        }
-        
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            performCodeAnalysis(language, selectedFile, mode);
-        }
-    }
-    
-    /**
-     * 创建文件过滤器
-     */
-    private javax.swing.filechooser.FileFilter createFileFilter(CodeStatsCore.Language language) {
-        return switch (language) {
-            case JAVA -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory() || f.getName().endsWith(".java");
-                }
-                @Override
-                public String getDescription() {
-                    return "Java 文件 (*.java)";
-                }
-            };
-            case PYTHON -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory() || f.getName().endsWith(".py");
-                }
-                @Override
-                public String getDescription() {
-                    return "Python 文件 (*.py)";
-                }
-            };
-            case C -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory() || f.getName().endsWith(".c") || f.getName().endsWith(".h");
-                }
-                @Override
-                public String getDescription() {
-                    return "C 文件 (*.c, *.h)";
-                }
-            };
-            case CPP -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory() || f.getName().endsWith(".cpp") || 
-                           f.getName().endsWith(".hpp") || f.getName().endsWith(".cc") ||
-                           f.getName().endsWith(".cxx") || f.getName().endsWith(".hxx");
-                }
-                @Override
-                public String getDescription() {
-                    return "C++ 文件 (*.cpp, *.hpp, *.cc, *.cxx)";
-                }
-            };
-            case CSHARP -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory() || f.getName().endsWith(".cs");
-                }
-                @Override
-                public String getDescription() {
-                    return "C# 文件 (*.cs)";
-                }
-            };
-            // 添加 default 分支来处理未预期的情况
-            default -> new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    return f.isDirectory();
-                }
-
-                @Override
-                public String getDescription() {
-                    return "所有文件";
-                }
-            };
-        };
-    }
-    
-    /**
-     * 执行代码分析
-     * 根据模式显示不同的统计结果
-     */
-    private void performCodeAnalysis(CodeStatsCore.Language language, File file, int mode) {
-        // 创建进度对话框
-        JDialog progressDialog = new JDialog(this, "分析中", true);
-        JProgressBar progressBar = new JProgressBar();
-        progressBar.setIndeterminate(true);
-        progressDialog.add(new JLabel("正在分析代码，请稍候..."), BorderLayout.NORTH);
-        progressDialog.add(progressBar, BorderLayout.CENTER);
-        progressDialog.setSize(300, 100);
-        progressDialog.setLocationRelativeTo(this);
-        
-        // 在后台线程执行分析
-        SwingWorker<CodeStatsCore.AnalyzeResult, Void> worker = 
-            new SwingWorker<CodeStatsCore.AnalyzeResult, Void>() {
-            
-            @Override
-            protected CodeStatsCore.AnalyzeResult doInBackground() throws Exception {
-                CodeStatsService service = new CodeStatsService();
-                CodeStatsService.AnalyzeRequest request = new CodeStatsService.AnalyzeRequest();
-                request.language = language;
-                request.paths = List.of(file.getAbsolutePath());
-                request.mode = mode;
-                
-                return service.analyze(request);
-            }
-            
-            @Override
-            protected void done() {
-                progressDialog.dispose();
-                try {
-                    CodeStatsCore.AnalyzeResult res = get();
-                    
-                    if (mode == CodeStatsService.MODE_CODE_METRICS) {
-                        showCodeMetricsResult(res);
-                    } else {
-                        showFunctionLengthResult(res);
-                    }
-                    
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(
-                        DuckGUI.this, 
-                        "分析过程中发生错误：" + ex.getMessage(), 
-                        "错误", 
-                        JOptionPane.ERROR_MESSAGE
-                    );
-                }
-            }
-        };
-        
-        worker.execute();
-        progressDialog.setVisible(true);
-    }
-    
-    /**
-     * 显示代码量统计结果
-     */
-    private void showCodeMetricsResult(CodeStatsCore.AnalyzeResult result) {
-        if (result.codeMetrics == null) {
-            JOptionPane.showMessageDialog(this, 
-                "未找到任何文件！", 
-                "分析结果", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        CodeStatsCore.CodeMetrics metrics = result.codeMetrics;
-        String message = String.format(
-            "代码量统计结果:\n\n" +
-            "文件数量: %d\n" +
-            "总行数: %d\n" +
-            "代码行数: %d\n" +
-            "注释行数: %d\n" +
-            "空行数: %d\n\n" +
-            "代码占比: %.1f%%\n" +
-            "注释占比: %.1f%%",
-            metrics.fileCount,
-            metrics.totalLines,
-            metrics.codeLines,
-            metrics.commentLines,
-            metrics.blankLines,
-            metrics.totalLines > 0 ? (metrics.codeLines * 100.0 / metrics.totalLines) : 0,
-            metrics.totalLines > 0 ? (metrics.commentLines * 100.0 / metrics.totalLines) : 0
-        );
-        
-        JOptionPane.showMessageDialog(this, 
-            message, 
-            "代码量统计结果", 
-            JOptionPane.INFORMATION_MESSAGE);
-    }
-    
-    /**
-     * 显示函数长度统计结果（带图表）
-     */
-    private void showFunctionLengthResult(CodeStatsCore.AnalyzeResult result) {
-        if (result.summary == null || result.summary.count == 0) {
-            JOptionPane.showMessageDialog(this, 
-                "未找到任何函数或方法！", 
-                "分析结果", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        // 创建结果对话框
-        JDialog resultDialog = new JDialog(this, "函数长度统计结果", true);
-        resultDialog.setLayout(new BorderLayout(10, 10));
-        resultDialog.setSize(800, 600);
-        resultDialog.setLocationRelativeTo(this);
-        
-        // 统计信息面板
-        JPanel infoPanel = new JPanel(new GridLayout(5, 1, 5, 5));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        infoPanel.add(new JLabel(String.format("函数数量: %d", result.summary.count)));
-        infoPanel.add(new JLabel(String.format("平均长度: %.2f 行", result.summary.mean)));
-        infoPanel.add(new JLabel(String.format("最大长度: %d 行", result.summary.max)));
-        infoPanel.add(new JLabel(String.format("最小长度: %d 行", result.summary.min)));
-        infoPanel.add(new JLabel(String.format("中位数: %.2f 行", result.summary.median)));
-        
-        // 图表面板
-        JTabbedPane chartTabbedPane = new JTabbedPane();
-        
-        // 收集所有函数长度
-        List<Integer> lengths = new ArrayList<>();
-        for (CodeStatsCore.FunctionStat func : result.functions) {
-            lengths.add(func.length);
-        }
-        
-        // 柱状图
-        ChartPanel barChart = new ChartPanel(lengths, "bar", "函数长度分布（柱状图）");
-        chartTabbedPane.addTab("柱状图", barChart);
-        
-        // 饼图
-        ChartPanel pieChart = new ChartPanel(lengths, "pie", "函数长度分布（饼图）");
-        chartTabbedPane.addTab("饼图", pieChart);
-        
-        // 关闭按钮
-        JButton closeButton = new JButton("关闭");
-        closeButton.addActionListener(e -> resultDialog.dispose());
-        
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(closeButton);
-        
-        resultDialog.add(infoPanel, BorderLayout.NORTH);
-        resultDialog.add(chartTabbedPane, BorderLayout.CENTER);
-        resultDialog.add(buttonPanel, BorderLayout.SOUTH);
-        
-        resultDialog.setVisible(true);
-    }
-    
-    /**
      * 显示换装对话框
-     * 使用类似衣柜的界面让用户选择配饰
+     * 使用分类衣柜界面让用户选择服装和配饰
      */
     private void showDressUpDialog(DuckComponent duck) {
         JDialog wardrobeDialog = new JDialog(this, "给 " + duck.getName() + " 换装", true);
         wardrobeDialog.setLayout(new BorderLayout(10, 10));
-        wardrobeDialog.setSize(450, 400);
+        wardrobeDialog.setSize(500, 500);
         wardrobeDialog.setLocationRelativeTo(this);
         
         // 衣柜标题
-        JLabel titleLabel = new JLabel("🎨 时尚衣柜 🎨", JLabel.CENTER);
+        JLabel titleLabel = new JLabel("👗 时尚衣柜 👗", JLabel.CENTER);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         titleLabel.setForeground(new Color(0, 102, 204));
         
-        // 配饰选项面板
-        JPanel accessoriesPanel = new JPanel(new GridLayout(5, 1, 10, 10));
-        accessoriesPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        // 创建选项卡面板
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 14));
         
-        String[] accessories = {"帽子", "眼镜", "领带", "拐杖", "西装"};
-        String[] emojis = {"🎩", "👓", "👔", "🎋", "🤵"};
+        // 上衣面板
+        JPanel topPanel = createClothingPanel(duck, new String[][]{
+            {"T恤", "👕"}, {"衬衫", "👔"}, {"卫衣", "🧥"}, {"西装", "🤵"}, 
+            {"雨衣", " 가운"}, {"羽绒服", "🥼"}
+        }, "top");
+        tabbedPane.addTab("上衣", topPanel);
         
-        for (int i = 0; i < accessories.length; i++) {
-            String accessory = accessories[i];
-            String emoji = emojis[i];
-            
-            JPanel itemPanel = new JPanel(new BorderLayout(10, 0));
-            itemPanel.setBackground(Color.WHITE);
-            itemPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
-            ));
-            
-            JLabel itemLabel = new JLabel(emoji + " " + accessory);
-            itemLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
-            
-            JButton toggleButton = new JButton(
-                duck.getClothing().contains(accessory) ? "✓ 已穿" : "穿上"
-            );
-            toggleButton.setFocusPainted(false);
-            
-            // 根据状态设置按钮颜色
-            if (duck.getClothing().contains(accessory)) {
-                toggleButton.setBackground(new Color(144, 238, 144));
-            } else {
-                toggleButton.setBackground(new Color(173, 216, 230));
-            }
-            
-            toggleButton.addActionListener(e -> {
-                if (duck.getClothing().contains(accessory)) {
-                    duck.removeClothing(accessory);
-                    toggleButton.setText("穿上");
-                    toggleButton.setBackground(new Color(173, 216, 230));
-                } else {
-                    duck.addClothing(accessory);
-                    toggleButton.setText("✓ 已穿");
-                    toggleButton.setBackground(new Color(144, 238, 144));
-                }
-                duck.repaint();
-            });
-            
-            itemPanel.add(itemLabel, BorderLayout.CENTER);
-            itemPanel.add(toggleButton, BorderLayout.EAST);
-            
-            accessoriesPanel.add(itemPanel);
-        }
+        // 下装面板
+        JPanel bottomPanel = createClothingPanel(duck, new String[][]{
+            {"牛仔短裤", "🩳"}, {"休闲长裤", "👖"}, {"百褶裙", "👗"}, 
+            {"工装裤", "👖"}, {"运动裤", "pants"}, {"旗袍", "cheongsam"}
+        }, "bottom");
+        tabbedPane.addTab("下装", bottomPanel);
+        
+        // 鞋子面板
+        JPanel shoesPanel = createClothingPanel(duck, new String[][]{
+            {"跑鞋", "👟"}, {"高跟鞋", "👠"}, {"雪地靴", "👢"}, 
+            {"拖鞋", "👡"}, {"帆布鞋", "👟"}, {"登山鞋", "🥾"}
+        }, "shoes");
+        tabbedPane.addTab("鞋子", shoesPanel);
+        
+        // 配饰面板
+        JPanel accessoriesPanel = createClothingPanel(duck, new String[][]{
+            {"棒球帽", "🧢"}, {"太阳镜", "🕶️"}, {"围巾", "🧣"}, 
+            {"手表", "⌚"}, {"背包", "🎒"}, {"耳机", "🎧"}
+        }, "accessories");
+        tabbedPane.addTab("配饰", accessoriesPanel);
         
         // 完成按钮
         JButton doneButton = new JButton("✓ 完成换装");
@@ -654,10 +405,205 @@ public class DuckGUI extends JFrame {
         buttonPanel.add(doneButton);
         
         wardrobeDialog.add(titleLabel, BorderLayout.NORTH);
-        wardrobeDialog.add(accessoriesPanel, BorderLayout.CENTER);
+        wardrobeDialog.add(tabbedPane, BorderLayout.CENTER);
         wardrobeDialog.add(buttonPanel, BorderLayout.SOUTH);
         
         wardrobeDialog.setVisible(true);
+    }
+    
+    /**
+     * 创建服装面板
+     */
+    private JPanel createClothingPanel(DuckComponent duck, String[][] items, String category) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // 创建服装选项网格
+        JPanel gridPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        
+        for (String[] item : items) {
+            String itemName = item[0];
+            String emoji = item[1];
+            
+            JPanel itemPanel = new JPanel(new BorderLayout(10, 0));
+            itemPanel.setBackground(Color.WHITE);
+            itemPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+            ));
+            
+            JLabel itemLabel = new JLabel(emoji + " " + itemName);
+            itemLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+            
+            JButton toggleButton = new JButton(
+                duck.getClothing().contains(itemName) ? "✓ 已穿" : "穿上"
+            );
+            toggleButton.setFocusPainted(false);
+            
+            // 根据状态设置按钮颜色
+            if (duck.getClothing().contains(itemName)) {
+                toggleButton.setBackground(new Color(144, 238, 144));
+            } else {
+                toggleButton.setBackground(new Color(173, 216, 230));
+            }
+            
+            toggleButton.addActionListener(e -> {
+                if (duck.getClothing().contains(itemName)) {
+                    duck.removeClothing(itemName);
+                    toggleButton.setText("穿上");
+                    toggleButton.setBackground(new Color(173, 216, 230));
+                } else {
+                    duck.addClothing(itemName);
+                    toggleButton.setText("✓ 已穿");
+                    toggleButton.setBackground(new Color(144, 238, 144));
+                }
+                duck.repaint();
+            });
+            
+            itemPanel.add(itemLabel, BorderLayout.CENTER);
+            itemPanel.add(toggleButton, BorderLayout.EAST);
+            
+            gridPanel.add(itemPanel);
+        }
+        
+        panel.add(gridPanel, BorderLayout.CENTER);
+        
+        // 添加预览面板（支持上衣、下装、鞋子）
+        if ("top".equals(category) || "bottom".equals(category) || "shoes".equals(category)) {
+            JPanel previewPanel = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    // 绘制一个小的鸭子预览
+                    int centerX = getWidth() / 2;
+                    int centerY = getHeight() / 2;
+                    
+                    // 鸭子头部
+                    g2d.setColor(new Color(255, 230, 100));
+                    g2d.fillOval(centerX - 15, centerY - 25, 30, 30);
+                    
+                    // 鸭子眼睛
+                    g2d.setColor(Color.BLACK);
+                    g2d.fillOval(centerX - 8, centerY - 18, 5, 5);
+                    g2d.fillOval(centerX + 3, centerY - 18, 5, 5);
+                    
+                    // 鸭子嘴巴
+                    g2d.setColor(new Color(255, 140, 0));
+                    int[] beakX = {centerX - 5, centerX + 5, centerX - 5};
+                    int[] beakY = {centerY - 10, centerY - 10, centerY - 5};
+                    g2d.fillPolygon(beakX, beakY, 3);
+                    
+                    // 鸭子身体
+                    g2d.setColor(new Color(255, 230, 100));
+                    g2d.fillOval(centerX - 20, centerY, 40, 40);
+                    
+                    // 根据类别和选中的服装绘制预览
+                    for (String[] item : items) {
+                        String itemName = item[0];
+                        if (duck.getClothing().contains(itemName)) {
+                            if ("top".equals(category)) {
+                                // 绘制上衣预览
+                                if (itemName.equals("T恤")) {
+                                    g2d.setColor(new Color(220, 20, 60));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                } else if (itemName.equals("衬衫")) {
+                                    g2d.setColor(Color.WHITE);
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                    
+                                    // 纽扣
+                                    g2d.setColor(Color.YELLOW);
+                                    for (int i = 0; i < 3; i++) {
+                                        g2d.fillOval(centerX - 2, centerY + 8 + i * 6, 4, 4);
+                                    }
+                                } else if (itemName.equals("卫衣")) {
+                                    g2d.setColor(new Color(255, 140, 0));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                } else if (itemName.equals("西装")) {
+                                    g2d.setColor(new Color(50, 50, 50));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                } else if (itemName.equals("雨衣")) {
+                                    g2d.setColor(new Color(173, 216, 230));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                } else if (itemName.equals("羽绒服")) {
+                                    g2d.setColor(new Color(255, 228, 196));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 5, 36, 25, 8, 8);
+                                }
+                            } 
+                            else if ("bottom".equals(category)) {
+                                // 绘制下装预览
+                                if (itemName.equals("牛仔短裤")) {
+                                    g2d.setColor(new Color(30, 144, 255));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 15);
+                                } else if (itemName.equals("休闲长裤")) {
+                                    g2d.setColor(new Color(105, 105, 105));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 25);
+                                } else if (itemName.equals("百褶裙")) {
+                                    g2d.setColor(new Color(255, 182, 193));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 12);
+                                    // 褶皱
+                                    g2d.setColor(new Color(255, 105, 180));
+                                    for (int i = 0; i < 5; i++) {
+                                        g2d.drawLine(centerX - 12 + i*6, centerY + 20, centerX - 12 + i*6, centerY + 32);
+                                    }
+                                } else if (itemName.equals("工装裤")) {
+                                    g2d.setColor(new Color(85, 107, 47));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 25);
+                                } else if (itemName.equals("运动裤")) {
+                                    g2d.setColor(new Color(128, 128, 128));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 25);
+                                } else if (itemName.equals("旗袍")) {
+                                    g2d.setColor(new Color(139, 0, 0));
+                                    g2d.fillRect(centerX - 15, centerY + 20, 30, 20);
+                                }
+                            } 
+                            else if ("shoes".equals(category)) {
+                                // 绘制鞋子预览
+                                if (itemName.equals("跑鞋")) {
+                                    g2d.setColor(new Color(255, 255, 255));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 10, 8, 8);
+                                    g2d.setColor(Color.RED);
+                                    g2d.fillOval(centerX - 10, centerY + 50, 8, 8);
+                                } else if (itemName.equals("高跟鞋")) {
+                                    g2d.setColor(new Color(0, 0, 0));
+                                    g2d.fillRoundRect(centerX - 15, centerY + 45, 30, 8, 6, 6);
+                                    g2d.setColor(Color.GRAY);
+                                    g2d.fillRect(centerX - 2, centerY + 53, 4, 12);
+                                } else if (itemName.equals("雪地靴")) {
+                                    g2d.setColor(new Color(255, 255, 255));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 12, 8, 8);
+                                    g2d.setColor(new Color(139, 69, 19)); // 棕色
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 6, 6, 6);
+                                } else if (itemName.equals("拖鞋")) {
+                                    g2d.setColor(new Color(255, 165, 0));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 8, 6, 6);
+                                    g2d.setColor(Color.BLACK);
+                                    g2d.fillOval(centerX, centerY + 48, 8, 8);
+                                } else if (itemName.equals("帆布鞋")) {
+                                    g2d.setColor(new Color(255, 255, 255));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 10, 8, 8);
+                                    g2d.setColor(Color.BLUE);
+                                    g2d.drawLine(centerX - 10, centerY + 50, centerX + 10, centerY + 50);
+                                } else if (itemName.equals("登山鞋")) {
+                                    g2d.setColor(new Color(101, 67, 33));
+                                    g2d.fillRoundRect(centerX - 18, centerY + 45, 36, 12, 8, 8);
+                                }
+                            }
+                            break; // 每个类别只绘制一件
+                        }
+                    }
+                    
+                    g2d.dispose();
+                }
+            };
+            previewPanel.setPreferredSize(new Dimension(150, 150));
+            previewPanel.setBorder(BorderFactory.createTitledBorder("预览"));
+            panel.add(previewPanel, BorderLayout.SOUTH);
+        }
+        
+        return panel;
     }
     
     public static void main(String[] args) {

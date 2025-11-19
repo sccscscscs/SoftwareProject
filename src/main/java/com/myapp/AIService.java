@@ -104,7 +104,7 @@ public class AIService {
     }
     
     /**
-     * 发送HTTP请求
+     * 发送请求
      */
     private void sendRequest(HttpURLConnection connection, String requestBody) throws IOException {
         try (OutputStream os = connection.getOutputStream()) {
@@ -114,90 +114,78 @@ public class AIService {
     }
     
     /**
-     * 读取HTTP响应
+     * 读取响应
      */
     private String readResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
-        
-        InputStream inputStream;
-        if (responseCode >= 200 && responseCode < 300) {
-            inputStream = connection.getInputStream();
-        } else {
-            inputStream = connection.getErrorStream();
-        }
-        
+        InputStream inputStream = (responseCode == 200) ? 
+            connection.getInputStream() : connection.getErrorStream();
+            
+        StringBuilder response = new StringBuilder();
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                response.append(line);
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
             }
-            return response.toString();
         }
+        return response.toString();
     }
     
     /**
-     * 解析响应JSON（简单实现，提取content字段）
+     * 解析响应JSON
      */
     private String parseResponse(String jsonResponse) {
-        // 简单的JSON解析（生产环境建议使用JSON库如Gson或Jackson）
+        // 简单解析JSON响应，提取AI回复内容
+        // 实际生产环境建议使用JSON解析库如Gson或Jackson
+        
         try {
-            // 查找 "content": "..." 部分
-            int contentStart = jsonResponse.indexOf("\"content\"");
-            if (contentStart == -1) {
-                // 尝试查找错误信息
-                int errorStart = jsonResponse.indexOf("\"error\"");
-                if (errorStart != -1) {
-                    return "API返回错误：" + jsonResponse;
-                }
-                return "无法解析AI响应：" + jsonResponse;
+            // 使用简单的字符串处理提取内容
+            int startIndex = jsonResponse.indexOf("\"content\":\"");
+            if (startIndex == -1) {
+                return "AI服务返回格式错误：" + jsonResponse;
             }
             
-            contentStart = jsonResponse.indexOf(":", contentStart) + 1;
-            contentStart = jsonResponse.indexOf("\"", contentStart) + 1;
-            int contentEnd = jsonResponse.indexOf("\"", contentStart);
+            startIndex += 11; // 跳过"content":"前缀
+            int endIndex = jsonResponse.indexOf("\"", startIndex);
             
-            // 处理转义字符
-            String content = jsonResponse.substring(contentStart, contentEnd);
-            content = unescapeJson(content);
+            if (endIndex == -1) {
+                return "AI服务返回格式错误：" + jsonResponse;
+            }
             
-            return content;
+            String content = jsonResponse.substring(startIndex, endIndex);
+            return unescapeJson(content);
             
         } catch (Exception e) {
-            return "解析AI响应失败：" + e.getMessage() + "\n响应内容：" + jsonResponse;
+            return "解析AI响应失败：" + e.getMessage() + "\n原始响应：" + jsonResponse;
         }
     }
     
     /**
-     * JSON字符串转义
+     * 转义JSON特殊字符
      */
-    private String escapeJson(String str) {
-        return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\b", "\\b")
+                   .replace("\f", "\\f")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
     
     /**
-     * JSON字符串反转义
+     * 反转义JSON特殊字符
      */
-    private String unescapeJson(String str) {
-        return str.replace("\\n", "\n")
-                  .replace("\\r", "\r")
-                  .replace("\\t", "\t")
-                  .replace("\\\"", "\"")
-                  .replace("\\\\", "\\");
-    }
-    
-    /**
-     * 测试方法
-     */
-    public static void main(String[] args) {
-        AIService service = new AIService();
-        String response = service.chat("你好，请介绍一下Java编程语言。");
-        System.out.println("AI回复：\n" + response);
+    private String unescapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\\"", "\"")
+                   .replace("\\\\", "\\")
+                   .replace("\\b", "\b")
+                   .replace("\\f", "\f")
+                   .replace("\\n", "\n")
+                   .replace("\\r", "\r")
+                   .replace("\\t", "\t");
     }
 }
-

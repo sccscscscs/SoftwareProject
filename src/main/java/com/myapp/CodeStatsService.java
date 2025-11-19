@@ -11,12 +11,14 @@ import java.util.*;
  * 提供两种统计模式：
  * 1. 代码量统计模式（MODE_CODE_METRICS）
  * 2. 函数长度统计模式（MODE_FUNCTION_LENGTH）
+ * 3. 两种都统计模式（MODE_BOTH）
  */
 public class CodeStatsService {
     
     // 统计模式常量
     public static final int MODE_CODE_METRICS = 1;      // 代码量统计模式
     public static final int MODE_FUNCTION_LENGTH = 2;   // 函数长度统计模式
+    public static final int MODE_BOTH = 3;              // 两种都统计模式
 
     private final Map<Language, CodeAnalyzer> analyzers = Map.of(
             Language.JAVA, new JavaAnalyzer(),
@@ -49,6 +51,7 @@ public class CodeStatsService {
      * 主入口：根据模式返回不同的统计结果
      * MODE_CODE_METRICS：返回代码量统计（文件数、代码行数、注释行数）
      * MODE_FUNCTION_LENGTH：返回函数长度统计（均值/最大/最小/中位数 + 函数明细）
+     * MODE_BOTH：返回代码量统计和函数长度统计
      */
     public AnalyzeResult analyze(AnalyzeRequest req) {
         if (req == null || req.language == null)
@@ -59,10 +62,15 @@ public class CodeStatsService {
             throw new IllegalArgumentException("不支持的语言: " + req.language);
 
         // 根据模式选择不同的分析方法
-        if (req.mode == MODE_CODE_METRICS) {
-            return analyzeCodeMetrics(req, analyzer);
-        } else {
-            return analyzeFunctionLength(req, analyzer);
+        switch (req.mode) {
+            case MODE_CODE_METRICS:
+                return analyzeCodeMetrics(req, analyzer);
+            case MODE_FUNCTION_LENGTH:
+                return analyzeFunctionLength(req, analyzer);
+            case MODE_BOTH:
+                return analyzeBoth(req, analyzer);
+            default:
+                return analyzeFunctionLength(req, analyzer);
         }
     }
     
@@ -131,6 +139,23 @@ public class CodeStatsService {
         }
 
         return CodeStatsCore.buildResult(all);
+    }
+    
+    /** 都统计模式 */
+    private AnalyzeResult analyzeBoth(AnalyzeRequest req, CodeAnalyzer analyzer) {
+        // 先执行代码量统计
+        AnalyzeResult codeMetricsResult = analyzeCodeMetrics(req, analyzer);
+        
+        // 再执行函数长度统计
+        AnalyzeResult functionLengthResult = analyzeFunctionLength(req, analyzer);
+        
+        // 合并结果
+        AnalyzeResult result = new AnalyzeResult();
+        result.codeMetrics = codeMetricsResult.codeMetrics;
+        result.summary = functionLengthResult.summary;
+        result.functions = functionLengthResult.functions;
+        
+        return result;
     }
 
     /** 判断文件扩展名是否匹配语言类型 */

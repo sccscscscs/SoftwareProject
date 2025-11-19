@@ -100,51 +100,46 @@ public class RedPacketRainGame extends JDialog {
         gameTimer = new Timer(20, e -> {
             if (!gameRunning) return;
             
-            // 检查游戏时间
-            long elapsedTime = System.currentTimeMillis() - startTime;
-            if (elapsedTime >= GAME_DURATION) {
-                endGame();
-                return;
-            }
+            // 更新玩家位置
+            player.update();
             
             // 更新红包位置
-            List<RedPacket> toRemove = new ArrayList<>();
-            for (RedPacket rp : redPackets) {
-                rp.fall();
+            for (int i = redPackets.size() - 1; i >= 0; i--) {
+                RedPacket packet = redPackets.get(i);
+                packet.update();
+                
+                // 移除超出屏幕的红包
+                if (packet.y > GAME_HEIGHT) {
+                    redPackets.remove(i);
+                    continue;
+                }
                 
                 // 检测碰撞
-                if (rp.collidesWith(player)) {
-                    totalMoney += rp.money;
-                    toRemove.add(rp);
-                }
-                
-                // 红包掉出屏幕
-                if (rp.y > GAME_HEIGHT) {
-                    toRemove.add(rp);
+                if (player.getBounds().intersects(packet.getBounds())) {
+                    totalMoney += packet.money;
+                    redPackets.remove(i);
                 }
             }
-            redPackets.removeAll(toRemove);
             
+            // 更新界面
             gamePanel.repaint();
+            
+            // 检查游戏是否结束
+            long elapsed = System.currentTimeMillis() - startTime;
+            if (elapsed >= GAME_DURATION) {
+                endGame();
+            }
         });
         gameTimer.start();
         
-        // 定时生成红包
-        redPacketSpawnTimer = new Timer(500, e -> {
+        // 红包生成定时器
+        redPacketSpawnTimer = new Timer(300, e -> {
             if (!gameRunning) return;
-            spawnRedPacket();
+            if (random.nextInt(100) < 30) { // 30%概率生成红包
+                redPackets.add(new RedPacket(random.nextInt(GAME_WIDTH - RED_PACKET_SIZE), -RED_PACKET_SIZE));
+            }
         });
         redPacketSpawnTimer.start();
-    }
-    
-    /**
-     * 生成红包
-     */
-    private void spawnRedPacket() {
-        int x = random.nextInt(GAME_WIDTH - RED_PACKET_SIZE);
-        double money = 0.01 + random.nextDouble() * 9.99; // 0.01 到 10.00元
-        int shape = random.nextInt(3); // 0: 圆形, 1: 方形, 2: 菱形
-        redPackets.add(new RedPacket(x, 0, money, shape));
     }
     
     /**
@@ -152,14 +147,19 @@ public class RedPacketRainGame extends JDialog {
      */
     private void endGame() {
         gameRunning = false;
-        if (gameTimer != null) gameTimer.stop();
-        if (redPacketSpawnTimer != null) redPacketSpawnTimer.stop();
+        gameTimer.stop();
+        redPacketSpawnTimer.stop();
         
-        JOptionPane.showMessageDialog(this, 
-            String.format("游戏结束！\n您共获得红包金额：%.2f 元", totalMoney),
-            "游戏结束", 
-            JOptionPane.INFORMATION_MESSAGE);
+        String message = String.format(
+            "游戏结束！\n\n" +
+            "总耗时: %.1f秒\n" +
+            "获得金额: %.2f元\n\n" +
+            "感谢参与红包雨游戏！",
+            GAME_DURATION / 1000.0,
+            totalMoney
+        );
         
+        JOptionPane.showMessageDialog(this, message, "游戏结束", JOptionPane.INFORMATION_MESSAGE);
         dispose();
     }
     
@@ -168,52 +168,47 @@ public class RedPacketRainGame extends JDialog {
      */
     class Player {
         int x, y;
-        int speed = 8;
+        int speed = 5;
+        int dx = 0, dy = 0;
         
-        Player(int x, int y) {
+        public Player(int x, int y) {
             this.x = x;
             this.y = y;
         }
         
-        void moveLeft() {
-            x = Math.max(0, x - speed);
+        public void moveLeft() {
+            dx = -speed;
         }
         
-        void moveRight() {
-            x = Math.min(GAME_WIDTH - PLAYER_SIZE, x + speed);
+        public void moveRight() {
+            dx = speed;
         }
         
-        void moveUp() {
-            y = Math.max(0, y - speed);
+        public void moveUp() {
+            dy = -speed;
         }
         
-        void moveDown() {
-            y = Math.min(GAME_HEIGHT - PLAYER_SIZE, y + speed);
+        public void moveDown() {
+            dy = speed;
         }
         
-        Rectangle getBounds() {
+        public void update() {
+            x += dx;
+            y += dy;
+            
+            // 边界检测
+            if (x < 0) x = 0;
+            if (x > GAME_WIDTH - PLAYER_SIZE) x = GAME_WIDTH - PLAYER_SIZE;
+            if (y < 0) y = 0;
+            if (y > GAME_HEIGHT - PLAYER_SIZE) y = GAME_HEIGHT - PLAYER_SIZE;
+            
+            // 减缓移动速度，使控制更平滑
+            dx *= 0.8;
+            dy *= 0.8;
+        }
+        
+        public Rectangle getBounds() {
             return new Rectangle(x, y, PLAYER_SIZE, PLAYER_SIZE);
-        }
-        
-        void draw(Graphics2D g2d) {
-            // 绘制小人（简单的火柴人）
-            g2d.setColor(Color.BLUE);
-            
-            // 头
-            int headSize = PLAYER_SIZE / 3;
-            g2d.fillOval(x + PLAYER_SIZE / 2 - headSize / 2, y, headSize, headSize);
-            
-            // 身体
-            g2d.setStroke(new BasicStroke(3));
-            g2d.drawLine(x + PLAYER_SIZE / 2, y + headSize, x + PLAYER_SIZE / 2, y + PLAYER_SIZE * 2 / 3);
-            
-            // 手臂
-            g2d.drawLine(x + PLAYER_SIZE / 2, y + headSize + 5, x + PLAYER_SIZE / 4, y + PLAYER_SIZE / 2);
-            g2d.drawLine(x + PLAYER_SIZE / 2, y + headSize + 5, x + PLAYER_SIZE * 3 / 4, y + PLAYER_SIZE / 2);
-            
-            // 腿
-            g2d.drawLine(x + PLAYER_SIZE / 2, y + PLAYER_SIZE * 2 / 3, x + PLAYER_SIZE / 3, y + PLAYER_SIZE);
-            g2d.drawLine(x + PLAYER_SIZE / 2, y + PLAYER_SIZE * 2 / 3, x + PLAYER_SIZE * 2 / 3, y + PLAYER_SIZE);
         }
     }
     
@@ -223,120 +218,88 @@ public class RedPacketRainGame extends JDialog {
     class RedPacket {
         int x, y;
         double money;
-        int shape; // 0: 圆形, 1: 方形, 2: 菱形
-        int fallSpeed;
-        Color color;
+        int speed;
         
-        RedPacket(int x, int y, double money, int shape) {
+        public RedPacket(int x, int y) {
             this.x = x;
             this.y = y;
-            this.money = money;
-            this.shape = shape;
-            this.fallSpeed = 2 + random.nextInt(3); // 速度2-4
-            
-            // 根据金额决定颜色（金额越大越偏金色）
-            if (money > 8) {
-                color = new Color(255, 215, 0); // 金色
-            } else if (money > 5) {
-                color = new Color(255, 140, 0); // 橙色
-            } else if (money > 2) {
-                color = new Color(255, 69, 0);  // 橙红
-            } else {
-                color = new Color(255, 0, 0);   // 红色
-            }
+            this.money = (random.nextInt(1000) + 1) / 100.0; // 0.01 - 10.00元
+            this.speed = random.nextInt(3) + 2; // 2-4像素/帧
         }
         
-        void fall() {
-            y += fallSpeed;
+        public void update() {
+            y += speed;
         }
         
-        boolean collidesWith(Player player) {
-            Rectangle rpBounds = new Rectangle(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
-            return rpBounds.intersects(player.getBounds());
-        }
-        
-        void draw(Graphics2D g2d) {
-            g2d.setColor(color);
-            
-            switch (shape) {
-                case 0: // 圆形
-                    g2d.fillOval(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
-                    g2d.setColor(Color.BLACK);
-                    g2d.drawOval(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
-                    break;
-                    
-                case 1: // 方形
-                    g2d.fillRect(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
-                    g2d.setColor(Color.BLACK);
-                    g2d.drawRect(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
-                    break;
-                    
-                case 2: // 菱形
-                    int[] xPoints = {
-                        x + RED_PACKET_SIZE / 2,
-                        x + RED_PACKET_SIZE,
-                        x + RED_PACKET_SIZE / 2,
-                        x
-                    };
-                    int[] yPoints = {
-                        y,
-                        y + RED_PACKET_SIZE / 2,
-                        y + RED_PACKET_SIZE,
-                        y + RED_PACKET_SIZE / 2
-                    };
-                    g2d.fillPolygon(xPoints, yPoints, 4);
-                    g2d.setColor(Color.BLACK);
-                    g2d.drawPolygon(xPoints, yPoints, 4);
-                    break;
-            }
-            
-            // 绘制"￥"符号
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("SansSerif", Font.BOLD, 12));
-            g2d.drawString("￥", x + RED_PACKET_SIZE / 2 - 5, y + RED_PACKET_SIZE / 2 + 4);
+        public Rectangle getBounds() {
+            return new Rectangle(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
         }
     }
     
     /**
-     * 游戏面板
+     * 游戏面板类
      */
     class GamePanel extends JPanel {
+        private Font infoFont = new Font("SansSerif", Font.BOLD, 16);
+        private Font moneyFont = new Font("SansSerif", Font.BOLD, 20);
         
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g.create();
+            Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
-            // 背景
-            g2d.setColor(new Color(240, 248, 255));
-            g2d.fillRect(0, 0, getWidth(), getHeight());
+            // 绘制背景
+            g2d.setColor(new Color(135, 206, 250)); // 天蓝色
+            g2d.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             
-            // 绘制红包
-            for (RedPacket rp : redPackets) {
-                rp.draw(g2d);
-            }
+            // 绘制云朵装饰
+            g2d.setColor(Color.WHITE);
+            g2d.fillOval(50, 30, 60, 40);
+            g2d.fillOval(80, 20, 70, 50);
+            g2d.fillOval(120, 30, 60, 40);
+            
+            g2d.fillOval(600, 50, 60, 40);
+            g2d.fillOval(630, 40, 70, 50);
+            g2d.fillOval(670, 50, 60, 40);
             
             // 绘制玩家
-            player.draw(g2d);
-            
-            // 绘制倒计时和金额
+            g2d.setColor(new Color(255, 165, 0)); // 橙色
+            g2d.fillOval(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
             g2d.setColor(Color.BLACK);
-            g2d.setFont(new Font("SansSerif", Font.BOLD, 20));
+            g2d.drawOval(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
             
-            long elapsedTime = System.currentTimeMillis() - startTime;
-            int remainingSeconds = (int) Math.ceil((GAME_DURATION - elapsedTime) / 1000.0);
-            if (remainingSeconds < 0) remainingSeconds = 0;
+            // 绘制眼睛
+            g2d.fillOval(player.x + 10, player.y + 12, 6, 6);
+            g2d.fillOval(player.x + 24, player.y + 12, 6, 6);
             
-            g2d.drawString("倒计时: " + remainingSeconds + "秒", 20, 30);
-            g2d.drawString(String.format("金额: %.2f元", totalMoney), 20, 60);
+            // 绘制微笑
+            g2d.drawArc(player.x + 10, player.y + 15, 20, 15, 0, -180);
             
-            // 提示信息
-            g2d.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            g2d.drawString("使用方向键↑↓←→控制小人移动", GAME_WIDTH - 250, 30);
+            // 绘制红包
+            g2d.setColor(new Color(255, 0, 0)); // 红色
+            for (RedPacket packet : redPackets) {
+                g2d.fillRoundRect(packet.x, packet.y, RED_PACKET_SIZE, RED_PACKET_SIZE, 8, 8);
+                g2d.setColor(Color.YELLOW);
+                g2d.setFont(new Font("SansSerif", Font.BOLD, 10));
+                String moneyText = String.format("%.2f", packet.money);
+                int textWidth = g2d.getFontMetrics().stringWidth(moneyText);
+                g2d.drawString(moneyText, 
+                    packet.x + (RED_PACKET_SIZE - textWidth) / 2, 
+                    packet.y + RED_PACKET_SIZE / 2 + 5);
+                g2d.setColor(new Color(255, 0, 0));
+            }
             
-            g2d.dispose();
+            // 绘制游戏信息
+            long elapsed = System.currentTimeMillis() - startTime;
+            long remaining = Math.max(0, GAME_DURATION - elapsed);
+            double timeLeft = remaining / 1000.0;
+            
+            g2d.setFont(infoFont);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(String.format("倒计时: %.1f秒", timeLeft), 20, 30);
+            g2d.setFont(moneyFont);
+            g2d.drawString(String.format("获得金额: %.2f元", totalMoney), 20, 60);
         }
     }
 }
-
