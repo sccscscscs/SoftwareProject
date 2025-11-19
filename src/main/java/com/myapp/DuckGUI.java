@@ -396,6 +396,28 @@ public class DuckGUI extends JFrame {
                     return "C++ 文件 (*.cpp, *.hpp, *.cc, *.cxx)";
                 }
             };
+            case CSHARP -> new javax.swing.filechooser.FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    return f.isDirectory() || f.getName().endsWith(".cs");
+                }
+                @Override
+                public String getDescription() {
+                    return "C# 文件 (*.cs)";
+                }
+            };
+            // 添加 default 分支来处理未预期的情况
+            default -> new javax.swing.filechooser.FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    return f.isDirectory();
+                }
+
+                @Override
+                public String getDescription() {
+                    return "所有文件";
+                }
+            };
         };
     }
     
