@@ -272,6 +272,161 @@ class PythonAnalyzer implements CodeAnalyzer {
     @Override public Language language() { return Language.PYTHON; }
 }
 
+/** —— C# 解析器 —— */
+class CSharpAnalyzer implements CodeAnalyzer {
+    // C#函数定义的正则表达式
+    private static final Pattern FUNCTION_PATTERN =
+            Pattern.compile("^\\s*(?:(?:public|private|protected|internal|static|virtual|override|abstract|sealed|async)\\s+)*" +
+                    "(?:[\\w<>\\[\\],\\s]+)\\s+" +  // 返回类型
+                    "([\\w]+)\\s*" +               // 函数名
+                    "\\([^)]*\\)\\s*" +            // 参数列表
+                    "(?:\\{|;)");                  // 函数体开始或声明结束
+
+    @Override
+    public List<FunctionStat> analyze(String code, String filePath) {
+        List<FunctionStat> out = new ArrayList<>();
+        String[] lines = code.split("\\r?\\n", -1);
+
+        // 使用栈跟踪类和命名空间结构
+        Deque<String> stack = new ArrayDeque<>();
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            String trimmed = line.trim();
+
+            // 跳过注释和预处理指令
+            if (trimmed.startsWith("//") || trimmed.startsWith("#") ||
+                    trimmed.startsWith("/*") || trimmed.isEmpty()) {
+                continue;
+            }
+
+            // 检查类、接口、结构体定义
+            if (trimmed.matches("^\\s*(public|private|internal)?\\s*(class|interface|struct)\\s+[\\w<>]+.*")) {
+                String typeName = trimmed.replaceAll("^\\s*(public|private|internal)?\\s*(class|interface|struct)\\s+", "")
+                        .split("[\\s:{]")[0];
+                stack.push(typeName);
+                continue;
+            }
+
+            // 检查命名空间
+            if (trimmed.matches("^\\s*namespace\\s+[\\w.]+.*")) {
+                String namespace = trimmed.replaceFirst("^\\s*namespace\\s+", "").split("[\\s{]")[0];
+                stack.push(namespace);
+                continue;
+            }
+
+            // 检查右花括号，可能是结束类/命名空间定义
+            if (trimmed.equals("}")) {
+                if (!stack.isEmpty()) {
+                    stack.pop();
+                }
+                continue;
+            }
+
+            Matcher m = FUNCTION_PATTERN.matcher(line);
+            if (m.find()) {
+                String funcName = m.group(1);
+
+                // 排除一些常见的非函数关键字
+                if ("if".equals(funcName) || "for".equals(funcName) || "while".equals(funcName) ||
+                        "foreach".equals(funcName) || "using".equals(funcName) || "catch".equals(funcName)) {
+                    continue;
+                }
+
+                int start = i + 1;
+                int end = start;
+
+                // 如果是函数定义（有大括号），找到函数结束位置
+                if (line.contains("{")) {
+                    int braceCount = 1;
+                    for (int j = i + 1; j < lines.length && braceCount > 0; j++) {
+                        String l = lines[j];
+                        for (char c : l.toCharArray()) {
+                            if (c == '{') braceCount++;
+                            else if (c == '}') braceCount--;
+                        }
+                        if (braceCount == 0) {
+                            end = j + 1;
+                            break;
+                        }
+                        end = j + 1;
+                    }
+
+                    // 构建限定名称
+                    String qualName = funcName;
+                    if (!stack.isEmpty()) {
+                        List<String> pathElements = new ArrayList<>(stack);
+                        Collections.reverse(pathElements);
+                        qualName = String.join(".", pathElements) + "." + funcName;
+                    }
+
+                    boolean isMethod = stack.stream().anyMatch(s ->
+                            s.contains("class") || s.contains("struct"));
+                    boolean isNested = stack.size() > 1;
+
+                    out.add(new FunctionStat(filePath, qualName, start, end,
+                            isMethod, isNested, funcName.startsWith("async")));
+                }
+            }
+        }
+
+        return out;
+    }
+
+    @Override
+    public CodeMetrics analyzeCodeMetrics(String code, String filePath) {
+        CodeMetrics metrics = new CodeMetrics();
+        metrics.fileCount = 1;
+
+        String[] lines = code.split("\\r?\\n", -1);
+        metrics.totalLines = lines.length;
+
+        boolean inBlockComment = false;
+        for (String line : lines) {
+            String trimmed = line.trim();
+
+            // 空行
+            if (trimmed.isEmpty()) {
+                metrics.blankLines++;
+                continue;
+            }
+
+            // 块注释处理
+            if (inBlockComment) {
+                metrics.commentLines++;
+                if (trimmed.contains("*/")) {
+                    inBlockComment = false;
+                }
+                continue;
+            }
+
+            // 开始块注释
+            if (trimmed.startsWith("/*")) {
+                metrics.commentLines++;
+                if (!trimmed.contains("*/")) {
+                    inBlockComment = true;
+                }
+                continue;
+            }
+
+            // 单行注释
+            if (trimmed.startsWith("//")) {
+                metrics.commentLines++;
+                continue;
+            }
+
+            // 代码行
+            metrics.codeLines++;
+        }
+
+        return metrics;
+    }
+
+    @Override
+    public Language language() {
+        return Language.CSHARP;
+    }
+}
 /** —— C/C++ 解析器 —— */
 class CppAnalyzer implements CodeAnalyzer {
     // C/C++函数定义的正则表达式（简化版）

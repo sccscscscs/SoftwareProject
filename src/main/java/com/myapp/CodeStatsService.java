@@ -22,7 +22,8 @@ public class CodeStatsService {
             Language.JAVA, new JavaAnalyzer(),
             Language.PYTHON, new PythonAnalyzer(),
             Language.C, new CppAnalyzer(),
-            Language.CPP, new CppAnalyzer()
+            Language.CPP, new CppAnalyzer(),
+            Language.CSHARP, new CSharpAnalyzer()
     );
 
     /** 前端若直接传代码（不是磁盘文件），用这个结构 */
@@ -142,6 +143,7 @@ public class CodeStatsService {
             case CPP -> name.endsWith(".cpp") || name.endsWith(".cc") || 
                        name.endsWith(".cxx") || name.endsWith(".hpp") || 
                        name.endsWith(".hh") || name.endsWith(".hxx");
+            case CSHARP -> name.endsWith(".cs");
         };
     }
 

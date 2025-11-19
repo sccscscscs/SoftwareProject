@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class CodeStatsCore {
 
     // 支持的编程语言
-    public enum Language { JAVA, PYTHON, C, CPP }
+    public enum Language { JAVA, PYTHON, C, CPP,CSHARP }
 
     /** 单个函数/方法的统计 */
     public static class FunctionStat {
