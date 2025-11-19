@@ -291,6 +291,7 @@ public class DuckGUI extends JFrame {
                 case 1 -> CodeStatsCore.Language.PYTHON;
                 case 2 -> CodeStatsCore.Language.C;
                 case 3 -> CodeStatsCore.Language.CPP;
+                case 4 -> CodeStatsCore.Language.CSHARP;
                 default -> null;
             };
             
