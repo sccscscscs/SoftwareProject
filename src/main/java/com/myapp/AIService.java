@@ -1,191 +1,293 @@
 package com.myapp;
 
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * AI对话服务
- * 接入免费的中国AI API（智谱AI - ChatGLM）
- * 
- * 使用说明：
- * 1. 访问 https://open.bigmodel.cn/ 注册账号
- * 2. 获取API Key
- * 3. 将API Key设置到系统环境变量 ZHIPU_AI_KEY 或直接修改 API_KEY 常量
- * 
- * 注意：本实现使用简化的HTTP请求，实际生产环境建议使用官方SDK
+ * 通用 AI 对话服务（智谱 GLM 接口）
+ *
+ * 使用方式：
+ * 1. 注册：https://open.bigmodel.cn/
+ * 2. 控制台创建并复制 API Key
+ * 3. 设置环境变量：ZHIPU_AI_KEY=你的key
+ *    或在代码里通过 new AIService("你的key") 传入
  */
 public class AIService {
-    
-    // 智谱AI API配置
-    private static final String API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-    private static String API_KEY = System.getenv("ZHIPU_AI_KEY"); // 从环境变量读取
-    
-    // 如果环境变量未设置，可以直接在这里填写API Key（不推荐，仅用于测试）
-    static {
-        if (API_KEY == null || API_KEY.isEmpty()) {
-            // 警告：请不要将API Key提交到代码仓库！
-            API_KEY = "your-api-key-here";
-        }
-    }
-    
+
+    /** 默认接口地址（不需要动） */
+    private static final String DEFAULT_API_URL =
+            "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+
+    /** 默认模型：glm-4-flash（免费 / 超便宜，适合作为默认） */
+    private static final String DEFAULT_MODEL = "glm-4-flash";
+
+    /** 默认从这个环境变量里读 key */
+    private static final String ENV_API_KEY = "ZHIPU_AI_KEY";
+
+    private final String apiKey;
+    private final String apiUrl;
+    private final String model;
+    private final int connectTimeoutMs;
+    private final int readTimeoutMs;
+    private final Gson gson = new Gson();
+
+    // ===== 构造函数区域 =====
+
     /**
-     * 发送对话请求到AI服务
-     * @param userMessage 用户输入的消息
-     * @return AI的回复
+     * 使用默认配置：
+     * - API Key：从环境变量 ZHIPU_AI_KEY 读取
+     * - 地址：DEFAULT_API_URL
+     * - 模型：glm-4-flash
+     */
+    public AIService() {
+        this(System.getenv(ENV_API_KEY));
+    }
+
+    /**
+     * 只指定 API Key，其他用默认。
+     */
+    public AIService(String apiKey) {
+        this(apiKey, DEFAULT_API_URL, DEFAULT_MODEL, 10_000, 30_000);
+    }
+
+    /**
+     * 完全自定义。
+     */
+    public AIService(String apiKey,
+                     String apiUrl,
+                     String model,
+                     int connectTimeoutMs,
+                     int readTimeoutMs) {
+        this.apiKey = apiKey;
+        this.apiUrl = apiUrl;
+        this.model = model;
+        this.connectTimeoutMs = connectTimeoutMs;
+        this.readTimeoutMs = readTimeoutMs;
+    }
+
+    // ===== 对外主要方法 =====
+
+    /**
+     * 最简单的一轮对话：只发一条 user 消息。
      */
     public String chat(String userMessage) {
-        // 如果API Key未配置，返回友好提示
-        if (API_KEY == null || API_KEY.equals("your-api-key-here") || API_KEY.isEmpty()) {
-            return "AI功能需要配置API Key。\n\n" +
-                   "请访问 https://open.bigmodel.cn/ 注册并获取免费API Key，\n" +
-                   "然后设置环境变量 ZHIPU_AI_KEY 或修改 AIService.java 中的 API_KEY。\n\n" +
-                   "【模拟回复】您说：" + userMessage + "\n" +
-                   "这是一个模拟回复，配置API Key后将获得真实的AI对话功能。";
+        List<Message> messages = new ArrayList<>();
+        messages.add(new Message("user", userMessage));
+        return chat(messages);
+    }
+
+    /**
+     * 支持多轮对话：传入整个 messages 历史。
+     * messages 里元素格式：new Message("user"/"assistant"/"system", "内容")
+     */
+    public String chat(List<Message> messages) {
+        // 1. 检查 API Key
+        if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
+            return buildNoApiKeyMessage();
         }
-        
+
         try {
-            // 构建请求JSON（使用GLM-4-Flash免费模型）
-            String requestBody = buildRequestJson(userMessage);
-            
-            // 发送HTTP请求
+            // 2. 构建请求体
+            ChatRequest request = new ChatRequest();
+            request.model = this.model;
+            request.messages = messages;
+            request.temperature = 0.7; // 你想更稳一点可以改小
+            request.maxTokens = null;  // 用服务端默认，也可以改数值
+
+            String requestJson = gson.toJson(request);
+
+            // 3. 创建连接并发送请求
             HttpURLConnection connection = createConnection();
-            sendRequest(connection, requestBody);
-            
-            // 读取响应
-            String response = readResponse(connection);
-            
-            // 解析响应JSON
-            return parseResponse(response);
-            
+            sendRequest(connection, requestJson);
+
+            // 4. 读取响应
+            int statusCode = connection.getResponseCode();
+            String rawResponse = readResponse(connection, statusCode);
+
+            // 打印日志方便调试（生产环境可以换成 logger）
+            System.out.println("HTTP Status: " + statusCode);
+            System.out.println("Raw Response: " + rawResponse);
+
+            // 5. 按状态码处理
+            if (statusCode != HttpURLConnection.HTTP_OK) {
+                // 尝试解析为错误结构
+                ChatErrorResponse err = safeParseError(rawResponse);
+                if (err != null && err.error != null) {
+                    return "AI服务返回错误：[" + err.error.code + "] "
+                            + err.error.message;
+                }
+                return "AI服务调用失败，HTTP状态码：" + statusCode + "，响应内容：" + rawResponse;
+            }
+
+            // 6. 解析正常返回
+            ChatResponse chatResponse = gson.fromJson(rawResponse, ChatResponse.class);
+            if (chatResponse == null) {
+                return "AI服务返回为空，请稍后重试。";
+            }
+
+            if (chatResponse.error != null) {
+                return "AI服务返回错误：[" + chatResponse.error.code + "] "
+                        + chatResponse.error.message;
+            }
+
+            if (chatResponse.choices == null || chatResponse.choices.isEmpty()) {
+                return "AI服务未返回任何内容。";
+            }
+
+            ChatChoice firstChoice = chatResponse.choices.get(0);
+            if (firstChoice.message == null || firstChoice.message.content == null) {
+                return "AI服务返回格式异常：未找到 message.content 字段。";
+            }
+
+            return firstChoice.message.content;
+
         } catch (Exception e) {
-            return "AI服务调用失败：" + e.getMessage() + "\n\n" +
-                   "可能的原因：\n" +
-                   "1. 网络连接问题\n" +
-                   "2. API Key配置错误\n" +
-                   "3. API调用限额已用完\n\n" +
-                   "请检查网络连接和API配置。";
+            // 网络异常 / JSON 解析异常等
+            return "AI服务调用失败：" + e.getMessage() + "\n\n"
+                    + "可能的原因：\n"
+                    + "1. 网络连接问题（防火墙 / 代理 / GFW 等）\n"
+                    + "2. API Key 配置错误或已过期\n"
+                    + "3. 调用频率或额度超限\n\n"
+                    + "请检查网络连接和 API 配置。";
         }
     }
-    
-    /**
-     * 构建请求JSON
-     */
-    private String buildRequestJson(String userMessage) {
-        // 使用GLM-4-Flash模型（免费且响应快）
-        return String.format(
-            "{\n" +
-            "  \"model\": \"glm-4-flash\",\n" +
-            "  \"messages\": [\n" +
-            "    {\n" +
-            "      \"role\": \"user\",\n" +
-            "      \"content\": \"%s\"\n" +
-            "    }\n" +
-            "  ]\n" +
-            "}",
-            escapeJson(userMessage)
-        );
-    }
-    
-    /**
-     * 创建HTTP连接
-     */
+
+    // ===== HTTP & IO 相关私有方法 =====
+
     private HttpURLConnection createConnection() throws IOException {
-        URL url = new URL(API_URL);
+        URL url = new URL(apiUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + API_KEY);
+        connection.setRequestProperty("Authorization", "Bearer " + apiKey);
         connection.setDoOutput(true);
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(30000);
+        connection.setConnectTimeout(connectTimeoutMs);
+        connection.setReadTimeout(readTimeoutMs);
         return connection;
     }
-    
-    /**
-     * 发送请求
-     */
-    private void sendRequest(HttpURLConnection connection, String requestBody) throws IOException {
+
+    private void sendRequest(HttpURLConnection connection, String body) throws IOException {
         try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = requestBody.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
+            byte[] input = body.getBytes(StandardCharsets.UTF_8);
+            os.write(input);
+            os.flush();
         }
     }
-    
-    /**
-     * 读取响应
-     */
-    private String readResponse(HttpURLConnection connection) throws IOException {
-        int responseCode = connection.getResponseCode();
-        InputStream inputStream = (responseCode == 200) ? 
-            connection.getInputStream() : connection.getErrorStream();
-            
-        StringBuilder response = new StringBuilder();
+
+    private String readResponse(HttpURLConnection connection, int statusCode) throws IOException {
+        InputStream inputStream = statusCode == HttpURLConnection.HTTP_OK
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+
+        if (inputStream == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line.trim());
             }
         }
-        return response.toString();
+        return sb.toString();
     }
-    
-    /**
-     * 解析响应JSON
-     */
-    private String parseResponse(String jsonResponse) {
-        // 简单解析JSON响应，提取AI回复内容
-        // 实际生产环境建议使用JSON解析库如Gson或Jackson
-        
+
+    private ChatErrorResponse safeParseError(String raw) {
         try {
-            // 使用简单的字符串处理提取内容
-            int startIndex = jsonResponse.indexOf("\"content\":\"");
-            if (startIndex == -1) {
-                return "AI服务返回格式错误：" + jsonResponse;
-            }
-            
-            startIndex += 11; // 跳过"content":"前缀
-            int endIndex = jsonResponse.indexOf("\"", startIndex);
-            
-            if (endIndex == -1) {
-                return "AI服务返回格式错误：" + jsonResponse;
-            }
-            
-            String content = jsonResponse.substring(startIndex, endIndex);
-            return unescapeJson(content);
-            
-        } catch (Exception e) {
-            return "解析AI响应失败：" + e.getMessage() + "\n原始响应：" + jsonResponse;
+            return gson.fromJson(raw, ChatErrorResponse.class);
+        } catch (Exception ignored) {
+            return null;
         }
     }
-    
-    /**
-     * 转义JSON特殊字符
-     */
-    private String escapeJson(String input) {
-        if (input == null) return "";
-        return input.replace("\\", "\\\\")
-                   .replace("\"", "\\\"")
-                   .replace("\b", "\\b")
-                   .replace("\f", "\\f")
-                   .replace("\n", "\\n")
-                   .replace("\r", "\\r")
-                   .replace("\t", "\\t");
+
+    private String buildNoApiKeyMessage() {
+        return "AI功能需要配置 API Key。\n\n"
+                + "1. 访问 https://open.bigmodel.cn/ 注册并获取免费 API Key\n"
+                + "2. 将 API Key 设置到环境变量：ZHIPU_AI_KEY\n"
+                + "   或使用 new AIService(\"你的Key\") 传入\n\n"
+                + "【模拟回复】目前尚未配置真实 API Key。\n";
     }
-    
+
+    // ===== 内部数据结构（与 JSON 对应）=====
+
     /**
-     * 反转义JSON特殊字符
+     * 对话消息结构：role + content
      */
-    private String unescapeJson(String input) {
-        if (input == null) return "";
-        return input.replace("\\\"", "\"")
-                   .replace("\\\\", "\\")
-                   .replace("\\b", "\b")
-                   .replace("\\f", "\f")
-                   .replace("\\n", "\n")
-                   .replace("\\r", "\r")
-                   .replace("\\t", "\t");
+    public static class Message {
+        public String role;
+        public String content;
+
+        public Message() {
+        }
+
+        public Message(String role, String content) {
+            this.role = role;
+            this.content = content;
+        }
+    }
+
+    /**
+     * 请求结构体
+     */
+    private static class ChatRequest {
+        public String model;
+        public List<Message> messages;
+
+        public Double temperature;
+
+        @SerializedName("max_tokens")
+        public Integer maxTokens;
+    }
+
+    /**
+     * 正常返回的结构体（只保留我们需要的字段）
+     */
+    private static class ChatResponse {
+        public String id;
+        public String object;
+        public long created;
+        public String model;
+        public List<ChatChoice> choices;
+        public Usage usage;
+        public ChatError error; // 有些实现会把错误放在这里（兼容一下）
+    }
+
+    private static class ChatChoice {
+        public int index;
+        public Message message;
+        @SerializedName("finish_reason")
+        public String finishReason;
+    }
+
+    private static class Usage {
+        @SerializedName("prompt_tokens")
+        public int promptTokens;
+        @SerializedName("completion_tokens")
+        public int completionTokens;
+        @SerializedName("total_tokens")
+        public int totalTokens;
+    }
+
+    /**
+     * 错误返回结构
+     */
+    private static class ChatErrorResponse {
+        public ChatError error;
+    }
+
+    private static class ChatError {
+        public String code;
+        public String message;
     }
 }
+
+
