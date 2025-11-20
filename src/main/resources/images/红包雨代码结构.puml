@@ -1,0 +1,60 @@
+@startuml
+' 优化样式以适应文档
+skinparam dpi 150
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 80
+
+package "com.myapp.RedPacketRainGame" {
+
+    class RedPacketRainGame <<JDialog>> {
+        - static final int GAME_WIDTH = 800
+        - static final int GAME_DURATION = 10000
+        - gameTimer : Timer
+        - redPacketSpawnTimer : Timer
+        - totalMoney : double
+        - player : Player
+        - redPackets : List<RedPacket>
+        __
+        + RedPacketRainGame(parent : JFrame)
+        - init() : void
+        - startGame() : void
+        - endGame() : void
+    }
+    note right: 游戏主控制器\n管理生命周期与UI容器
+
+    class "Player (Inner Class)" as Player {
+        + x : int
+        + y : int
+        + speed : int
+        __
+        + moveLeft()
+        + moveRight()
+        + update() : void
+        + getBounds() : Rectangle
+    }
+    note bottom: 封装玩家状态\n与移动逻辑
+
+    class "RedPacket (Inner Class)" as RedPacket {
+        + x : int
+        + y : int
+        + money : double
+        + shape : Shape
+        __
+        + update() : void
+        + getBounds() : Rectangle
+    }
+    note bottom: 封装红包实体\n包含位置与金额
+
+    class "GamePanel (Inner Class)" as GamePanel <<JPanel>> {
+        + paintComponent(g : Graphics)
+    }
+    note top: 专用渲染画布\n负责双缓冲绘图
+
+    ' 内部类关系
+    RedPacketRainGame *-- Player
+    RedPacketRainGame *-- RedPacket
+    RedPacketRainGame *-- GamePanel
+}
+@enduml

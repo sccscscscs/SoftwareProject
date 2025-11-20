@@ -216,15 +216,21 @@ public class RedPacketRainGame extends JDialog {
      * 红包类
      */
     class RedPacket {
+        enum Shape { CIRCLE, SQUARE, TRIANGLE }
+        
         int x, y;
         double money;
         int speed;
+        Shape shape;
         
         public RedPacket(int x, int y) {
             this.x = x;
             this.y = y;
             this.money = (random.nextInt(1000) + 1) / 100.0; // 0.01 - 10.00元
             this.speed = random.nextInt(3) + 2; // 2-4像素/帧
+            // 随机分配形状
+            Shape[] shapes = Shape.values();
+            this.shape = shapes[random.nextInt(shapes.length)];
         }
         
         public void update() {
@@ -277,9 +283,26 @@ public class RedPacketRainGame extends JDialog {
             g2d.drawArc(player.x + 10, player.y + 15, 20, 15, 0, -180);
             
             // 绘制红包
-            g2d.setColor(new Color(255, 0, 0)); // 红色
             for (RedPacket packet : redPackets) {
-                g2d.fillRoundRect(packet.x, packet.y, RED_PACKET_SIZE, RED_PACKET_SIZE, 8, 8);
+                // 根据形状绘制不同样式的红包
+                switch (packet.shape) {
+                    case CIRCLE:
+                        g2d.setColor(new Color(255, 0, 0)); // 红色
+                        g2d.fillOval(packet.x, packet.y, RED_PACKET_SIZE, RED_PACKET_SIZE);
+                        break;
+                    case SQUARE:
+                        g2d.setColor(new Color(255, 0, 0)); // 红色
+                        g2d.fillRoundRect(packet.x, packet.y, RED_PACKET_SIZE, RED_PACKET_SIZE, 8, 8);
+                        break;
+                    case TRIANGLE:
+                        g2d.setColor(new Color(255, 0, 0)); // 红色
+                        int[] xPoints = {packet.x + RED_PACKET_SIZE/2, packet.x, packet.x + RED_PACKET_SIZE};
+                        int[] yPoints = {packet.y, packet.y + RED_PACKET_SIZE, packet.y + RED_PACKET_SIZE};
+                        g2d.fillPolygon(xPoints, yPoints, 3);
+                        break;
+                }
+                
+                // 绘制金额
                 g2d.setColor(Color.YELLOW);
                 g2d.setFont(new Font("SansSerif", Font.BOLD, 10));
                 String moneyText = String.format("%.2f", packet.money);
@@ -287,16 +310,15 @@ public class RedPacketRainGame extends JDialog {
                 g2d.drawString(moneyText, 
                     packet.x + (RED_PACKET_SIZE - textWidth) / 2, 
                     packet.y + RED_PACKET_SIZE / 2 + 5);
-                g2d.setColor(new Color(255, 0, 0));
             }
             
-            // 绘制游戏信息
+            // 绘制游戏信息（改为黑色）
             long elapsed = System.currentTimeMillis() - startTime;
             long remaining = Math.max(0, GAME_DURATION - elapsed);
             double timeLeft = remaining / 1000.0;
             
             g2d.setFont(infoFont);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(Color.BLACK); // 改为黑色
             g2d.drawString(String.format("倒计时: %.1f秒", timeLeft), 20, 30);
             g2d.setFont(moneyFont);
             g2d.drawString(String.format("获得金额: %.2f元", totalMoney), 20, 60);

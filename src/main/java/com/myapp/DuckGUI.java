@@ -4,7 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.io.File;
+import java.io.IOException;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -216,11 +218,34 @@ public class DuckGUI extends JFrame {
             scrollPane
         };
         
+        // 加载唐老鸭头像作为图标
+        Icon donaldIcon = null;
+        try {
+            BufferedImage originalImage = ImageIO.read(getClass().getResource("/images/largeduck.png"));
+            // 裁剪出头部区域（根据图片实际比例调整）
+            int width = originalImage.getWidth();
+            int height = originalImage.getHeight();
+            BufferedImage headImage = originalImage.getSubimage(
+                width / 4,  // x偏移
+                height / 8, // y偏移
+                width / 2,  // 宽度
+                height / 3  // 高度
+            );
+            // 缩放到合适大小
+            Image scaledImage = headImage.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            donaldIcon = new ImageIcon(scaledImage);
+        } catch (IOException e) {
+            // 如果加载失败，使用默认图标
+            System.err.println("加载唐老鸭头像失败: " + e.getMessage());
+            donaldIcon = UIManager.getIcon("OptionPane.questionIcon");
+        }
+        
         // 创建自定义对话框
         JOptionPane optionPane = new JOptionPane(
             message, 
             JOptionPane.QUESTION_MESSAGE, 
-            JOptionPane.OK_CANCEL_OPTION
+            JOptionPane.OK_CANCEL_OPTION,
+            donaldIcon // 使用唐老鸭头像作为图标
         );
         
         JDialog dialog = optionPane.createDialog(this, "唐老鸭对话框");
@@ -366,15 +391,15 @@ public class DuckGUI extends JFrame {
         
         // 上衣面板
         JPanel topPanel = createClothingPanel(duck, new String[][]{
-            {"T恤", "👕"}, {"衬衫", "👔"}, {"卫衣", "🧥"}, {"西装", "🤵"}, 
-            {"雨衣", " 가운"}, {"羽绒服", "🥼"}
+            {"T恤", "👕"}, {"衬衫", "👔"}, {"西装", "🤵"}, 
+            {"雨衣", "🌧️"}, {"羽绒服", "🥼"}
         }, "top");
         tabbedPane.addTab("上衣", topPanel);
         
         // 下装面板
         JPanel bottomPanel = createClothingPanel(duck, new String[][]{
             {"牛仔短裤", "🩳"}, {"休闲长裤", "👖"}, {"百褶裙", "👗"}, 
-            {"工装裤", "👖"}, {"运动裤", "pants"}, {"旗袍", "cheongsam"}
+            {"工装裤", "👖"}, {"运动裤", "🏃‍♂️"}, {"旗袍", "👘"}
         }, "bottom");
         tabbedPane.addTab("下装", bottomPanel);
         

@@ -1,0 +1,51 @@
+@startuml
+' 优化样式
+skinparam dpi 150
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 80
+
+package "com.myapp.DuckComponent" {
+
+    class DuckComponent <<JComponent>> {
+        - name : String
+        - isDonald : boolean
+        - clothing : List<String>
+        - currentStyle : String
+        __
+        + DuckComponent(name, isDonald)
+        + addClothing(item : String)
+        + removeClothing(item : String)
+        .. 核心绘制入口 ..
+        # paintComponent(g : Graphics)
+        .. 基础层绘制 ..
+        - drawDonaldDuck(...)
+        - drawBabyDuck(...)
+        - drawCasualBody(...)
+        - drawFormalBody(...)
+        .. 装饰层绘制 (Private Helpers) ..
+        - drawAccessories(...)
+        - drawHat(...)
+        - drawGlasses(...)
+        - drawTShirt(...)
+        - drawOveralls(...)
+        - drawSneakers(...)
+        - ... (其他配饰方法)
+    }
+    
+    note right of DuckComponent::paintComponent
+      模板方法：
+      1. 设置抗锯齿
+      2. 绘制基础层 (Body)
+      3. 绘制装饰层 (Accessories)
+      4. 绘制标签
+    end note
+
+    note right of DuckComponent::addClothing
+      包含业务逻辑：
+      互斥检查 (如：
+      添加背带裤时移除
+      其他衣服)
+    end note
+}
+@enduml

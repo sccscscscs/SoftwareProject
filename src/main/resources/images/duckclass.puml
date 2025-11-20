@@ -1,0 +1,68 @@
+@startuml
+' 样式设置：增加间距以优化文档显示
+skinparam dpi 600
+skinparam nodesep 120
+skinparam ranksep 80
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "com.myapp.DuckDressUp (小鸭扮靓模块)" {
+
+    class DuckGUI <<JFrame>> {
+        - ducks : List<DuckComponent>
+        - selectedDuck : DuckComponent
+        __
+        + DuckGUI()
+        - initUI() : void
+        - showDressUpDialog(duck : DuckComponent) : void
+        - createClothingPanel(duck : DuckComponent, ...) : JPanel
+    }
+
+    class DuckComponent <<JComponent>> {
+        - name : String
+        - isDonald : boolean
+        - clothing : List<String>
+        - isSelected : boolean
+        - currentStyle : String
+        __
+        + DuckComponent(name: String, isDonald: boolean)
+        + addClothing(item: String) : void
+        + removeClothing(item: String) : void
+        + getClothing() : List<String>
+        + setStyle(style: String) : void
+        # paintComponent(g: Graphics) : void
+        .. 绘图辅助方法 ..
+        - drawDonaldDuck(...)
+        - drawBabyDuck(...)
+        - drawCasualBody(...) / drawFormalBody(...)
+        - drawAccessories(...)
+        - drawHat(...) / drawGlasses(...) / ...
+    }
+    
+    note left of DuckComponent
+      <b>装饰器思想核心</b>
+      不使用继承，而是通过
+      clothing 列表动态叠加绘制
+    end note
+
+    class "WardrobeDialog (局部变量)" as Dialog <<JDialog>> {
+        - tabbedPane : JTabbedPane
+        - previewPanel : JPanel
+    }
+
+    ' 关系定义
+    DuckGUI "1" *-- "*" DuckComponent : 管理 >
+    DuckGUI ..> Dialog : 创建并显示 >
+    Dialog ..> DuckComponent : 修改状态 & 预览 >
+
+    note right of DuckGUI::createClothingPanel
+      创建包含"穿上/移除"按钮的面板
+      并绑定事件监听器
+    end note
+    
+    note right of DuckComponent::addClothing
+       包含互斥逻辑：
+       如穿"背带裤"时移除其他衣服
+    end note
+}
+@enduml

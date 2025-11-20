@@ -1,0 +1,61 @@
+@startuml
+' 增加水平间距，使分支结构更宽
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam dpi 150
+
+start
+:初始化游戏状态
+(设置 Player 初始位置, 清空 RedPacket 列表);
+:初始化两个定时器
+(GameTimer, SpawnTimer);
+:startGame();
+
+fork
+    partition "红包生成线程 (SpawnTimer)" {
+        repeat
+        :定时器触发 (300ms);
+        if (随机数 < 30% ?) then (yes)
+            :生成新 RedPacket 对象
+            (随机位置, 随机形状, 随机金额);
+            :添加到 redPackets 列表;
+        else (no)
+            :跳过生成;
+        endif
+        repeat while (gameRunning == true)
+    }
+fork again
+    partition "游戏主循环 (GameTimer)" {
+        repeat
+        :定时器触发 (20ms);
+        :Player.update() 
+        (更新玩家坐标);
+        
+        :遍历 redPackets 列表;
+        while (还有下一个红包?)
+            :获取红包;
+            :packet.update() (y坐标增加);
+            
+            if (红包超出屏幕底部?) then (yes)
+                :从列表中移除红包;
+            elseif (Player 与 红包 发生碰撞?) then (yes)
+                :totalMoney += packet.money;
+                :从列表中移除红包;
+            endif
+        endwhile
+        
+        :GamePanel.repaint()
+        (重绘背景、玩家、红包、分数);
+        
+        if (System.currentTime - startTime >= 10秒?) then (yes)
+            :停止所有 Timers;
+            :gameRunning = false;
+            :endGame();
+            :显示结算弹窗 (总金额/耗时);
+            stop
+        endif
+        repeat while (gameRunning == true)
+    }
+end fork
+stop
+@enduml

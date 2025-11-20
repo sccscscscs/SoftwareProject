@@ -1,0 +1,62 @@
+@startuml
+' 设置外观样式，使图表更宽敞、整洁
+skinparam dpi 150
+skinparam boxPadding 15
+skinparam participantPadding 20
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+autonumber
+
+actor "用户" as User
+
+box "界面交互层 (View)" #E6F2FF
+    participant "DuckGUI\n(主窗口)" as GUI
+    participant "WardrobeDialog\n(衣柜对话框)" as Dialog
+end box
+
+box "组件核心层 (Component)" #FFFFE0
+    participant "DuckComponent\n(鸭子实体)" as Duck
+    participant "PreviewPanel\n(预览小窗)" as Preview
+end box
+
+' === 流程开始 ===
+User -> GUI ++ : 点击小鸭子
+    GUI -> Duck : setSelected(true) (高亮显示)
+    GUI -> GUI : 初始化衣柜数据
+    
+    create Dialog
+    GUI -> Dialog ++ : 创建并显示换装窗口
+    
+    create Preview
+    Dialog -> Preview : 初始化预览面板
+deactivate GUI
+
+' === 换装循环 ===
+loop 用户反复尝试不同搭配
+    User -> Dialog : 点击服饰按钮 (如: "穿上 棒球帽")
+    
+    alt 动作: 穿上
+        Dialog -> Duck ++ : addClothing("棒球帽")
+        note right of Duck : 执行互斥逻辑检查\n(例: 戴新帽子前移除旧帽子)
+        Duck -> Duck : 更新 clothing 列表
+        return 状态更新完毕
+    else 动作: 移除
+        Dialog -> Duck : removeClothing("棒球帽")
+    end
+    
+    group #MistyRose 实时双重刷新机制
+        Dialog -> Duck : repaint()
+        note right : 刷新主界面大鸭子
+        
+        Dialog -> Preview : repaint()
+        note right : 刷新对话框内预览图
+    end
+end
+
+' === 结束 ===
+User -> Dialog : 点击 "完成换装"
+Dialog -> Duck : (保持最终状态)
+Dialog -> Dialog : dispose()
+return 关闭窗口
+
+@enduml

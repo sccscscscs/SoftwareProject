@@ -1,0 +1,80 @@
+@startuml
+' 样式设置：增加间距以优化文档显示
+skinparam dpi 150
+skinparam nodesep 100
+skinparam ranksep 80
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "com.myapp.RedPacketRainGame (红包雨游戏模块)" {
+
+    class RedPacketRainGame <<JDialog>> {
+        - static final int GAME_WIDTH = 800
+        - static final int GAME_HEIGHT = 600
+        - static final int GAME_DURATION = 10000
+        - gameTimer : javax.swing.Timer
+        - redPacketSpawnTimer : javax.swing.Timer
+        - totalMoney : double
+        - gameRunning : boolean
+        - player : Player
+        - redPackets : List<RedPacket>
+        - random : Random
+        __
+        + RedPacketRainGame(parent : JFrame)
+        - init() : void
+        - startGame() : void
+        - endGame() : void
+    }
+
+    class "Player (内部类)" as Player {
+        + x : int
+        + y : int
+        + speed : int
+        - dx : int
+        - dy : int
+        __
+        + Player(x: int, y: int)
+        + moveLeft() : void
+        + moveRight() : void
+        + moveUp() : void
+        + moveDown() : void
+        + update() : void
+        + getBounds() : Rectangle
+    }
+
+    class "RedPacket (内部类)" as RedPacket {
+        + x : int
+        + y : int
+        + money : double
+        + speed : int
+        + shape : Shape
+        __
+        + RedPacket(x: int, y: int)
+        + update() : void
+        + getBounds() : Rectangle
+    }
+
+    class "GamePanel (内部类)" as GamePanel <<JPanel>> {
+        - infoFont : Font
+        - moneyFont : Font
+        __
+        + paintComponent(g : Graphics) : void
+    }
+
+    ' 关系定义
+    RedPacketRainGame *-- "1" Player : 包含 >
+    RedPacketRainGame *-- "*" RedPacket : 管理 >
+    RedPacketRainGame *-- "1" GamePanel : 包含 >
+
+    note right of RedPacketRainGame::startGame
+      启动两个定时器：
+      1. gameTimer (20ms) 负责物理/渲染
+      2. spawnTimer (300ms) 负责生成红包
+    end note
+
+    note right of Player::update
+      更新坐标 (x+=dx, y+=dy)
+      并处理边界碰撞
+    end note
+}
+@enduml
