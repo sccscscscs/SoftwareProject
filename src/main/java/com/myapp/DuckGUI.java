@@ -12,18 +12,6 @@ import java.util.List;
 
 /**
  * 唐老鸭和小鸭子应用主界面
- * 
- * 功能说明：
- * 1. 点击唐老鸭：弹出对话框，用户可以输入需求
- *    - 输入包含"代码量"：进入代码统计功能（支持Java/Python/C/C++/C#）
- *    - 输入包含"红包雨"：启动红包雨游戏
- *    - 其他输入：调用AI对话服务
- * 
- * 2. 点击小鸭子：给小鸭子换装（帽子、眼镜、围巾领带手杖等）
- * 
- * 设计模式：
- * - 使用装饰器模式实现小鸭子的配饰系统
- * - 使用策略模式处理不同的用户请求
  */
 public class DuckGUI extends JFrame {
     private final List<DuckComponent> ducks = new ArrayList<>();

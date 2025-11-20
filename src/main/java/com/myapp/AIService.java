@@ -11,13 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 通用 AI 对话服务（智谱 GLM 接口）
- *
- * 使用方式：
- * 1. 注册：https://open.bigmodel.cn/
- * 2. 控制台创建并复制 API Key
- * 3. 设置环境变量：ZHIPU_AI_KEY=你的key
- *    或在代码里通过 new AIService("你的key") 传入
+  AI 服务（本处使用智谱）
  */
 public class AIService {
 
@@ -25,7 +19,7 @@ public class AIService {
     private static final String DEFAULT_API_URL =
             "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 
-    /** 默认模型：glm-4-flash（免费 / 超便宜，适合作为默认） */
+    /** glm-4-flash */
     private static final String DEFAULT_MODEL = "glm-4-flash";
 
     /** 默认从这个环境变量里读 key */
@@ -58,7 +52,7 @@ public class AIService {
     }
 
     /**
-     * 完全自定义。
+     * 自定义部分
      */
     public AIService(String apiKey,
                      String apiUrl,

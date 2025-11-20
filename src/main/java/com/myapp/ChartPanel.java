@@ -6,7 +6,6 @@ import java.util.List;
 
 /**
  * 图表可视化面板
- * 提供柱状图和饼图的绘制功能，用于展示函数长度统计数据
  */
 public class ChartPanel extends JPanel {
     
@@ -34,7 +33,7 @@ public class ChartPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // 绘制标题
+        // 标题
         g2d.setFont(new Font("SansSerif", Font.BOLD, 16));
         g2d.setColor(Color.BLACK);
         FontMetrics fm = g2d.getFontMetrics();

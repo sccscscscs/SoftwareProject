@@ -4,10 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /** 
- * 数据模型 + 汇总工具
- * 核心代码统计模块，提供两种分析模式：
- * 1. 代码量统计（文件数、代码行数、注释行数）
- * 2. 函数长度统计（均值、最大值、最小值、中位数）
+ * 所有的数据模型和统计工具
  */
 public class CodeStatsCore {
 

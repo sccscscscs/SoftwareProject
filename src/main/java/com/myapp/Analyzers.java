@@ -21,7 +21,6 @@ import com.myapp.CodeStatsCore.Language;
 
 /** 
  * 通用接口 - 所有语言分析器都实现此接口
- * 提供函数统计和代码量统计两种功能
  */
 interface CodeAnalyzer {
     /** 分析代码，返回函数统计信息 */

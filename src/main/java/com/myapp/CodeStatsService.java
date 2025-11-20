@@ -7,11 +7,7 @@ import java.nio.file.*;
 import java.util.*;
 
 /** 
- * 代码统计服务类
- * 提供两种统计模式：
- * 1. 代码量统计模式（MODE_CODE_METRICS）
- * 2. 函数长度统计模式（MODE_FUNCTION_LENGTH）
- * 3. 两种都统计模式（MODE_BOTH）
+ * 代码统计服务类（三种）
  */
 public class CodeStatsService {
     
@@ -42,7 +38,7 @@ public class CodeStatsService {
         public int mode = MODE_FUNCTION_LENGTH; // 统计模式，默认为函数长度统计
     }
 
-    /** 识别"代码量"意图（包含"代码量"关键词即触发） */
+    /** 如果前端输入“代码量”，识别并使用 */
     public static boolean isCodeStatIntent(String userInput) {
         return userInput != null && userInput.contains("代码量");
     }
@@ -74,7 +70,7 @@ public class CodeStatsService {
         }
     }
     
-    /** 代码量统计模式 */
+    /** 代码量统计*/
     private AnalyzeResult analyzeCodeMetrics(AnalyzeRequest req, CodeAnalyzer analyzer) {
         CodeMetrics totalMetrics = new CodeMetrics();
         
@@ -111,7 +107,7 @@ public class CodeStatsService {
         return result;
     }
     
-    /** 函数长度统计模式 */
+    /** 函数长度统计 */
     private AnalyzeResult analyzeFunctionLength(AnalyzeRequest req, CodeAnalyzer analyzer) {
         List<FunctionStat> all = new ArrayList<>();
 
@@ -141,12 +137,12 @@ public class CodeStatsService {
         return CodeStatsCore.buildResult(all);
     }
     
-    /** 都统计模式 */
+    /** 都统计 */
     private AnalyzeResult analyzeBoth(AnalyzeRequest req, CodeAnalyzer analyzer) {
-        // 先执行代码量统计
+        // 先执行代码量
         AnalyzeResult codeMetricsResult = analyzeCodeMetrics(req, analyzer);
         
-        // 再执行函数长度统计
+        // 再执行函数长度
         AnalyzeResult functionLengthResult = analyzeFunctionLength(req, analyzer);
         
         // 合并结果
@@ -192,32 +188,5 @@ public class CodeStatsService {
         }
     }
 
-    /** —— 可选演示：放在你已有的 Main 里或删掉 —— */
-    public static void main(String[] args) {
-        CodeStatsService svc = new CodeStatsService();
-
-        AnalyzeRequest req = new AnalyzeRequest();
-        req.language = Language.PYTHON;
-        InMemoryFile f = new InMemoryFile();
-        f.path = "demo.py";
-        f.code = """
-                def f(x):
-                    return x+1
-
-                class A:
-                    def m(self):
-                        def inner():
-                            pass
-                        return 42
-                """;
-        req.files = List.of(f);
-
-        AnalyzeResult res = svc.analyze(req);
-        System.out.println("count=" + res.summary.count
-                + ", mean=" + res.summary.mean
-                + ", min=" + res.summary.min
-                + ", max=" + res.summary.max
-                + ", median=" + res.summary.median);
-    }
 }
 

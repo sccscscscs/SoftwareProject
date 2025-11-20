@@ -21,10 +21,6 @@ import javax.swing.JComponent;
 
 /**
  * 鸭子组件 - 显示鸭子图片或手绘可爱的卡通鸭子
- * 
- * 支持加载图片资源显示鸭子，如果图片加载失败则使用手绘方式
- * 所有服装配件都使用手绘方式实现，不依赖外部图片资源
- * 支持多种服装风格：休闲装、正装、运动装等
  */
 public class DuckComponent extends JComponent {
     private final String name;

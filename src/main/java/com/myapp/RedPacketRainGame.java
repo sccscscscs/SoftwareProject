@@ -20,9 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 /**
- * 红包雨游戏
- * 用户操控小人（方向键上下左右）收集从屏幕上方掉落的红包
- * 游戏时长10秒，实时显示倒计时和获得的总金额
+ * 红包雨游戏(上下左右操控，10秒）
  */
 public class RedPacketRainGame extends JDialog {
     

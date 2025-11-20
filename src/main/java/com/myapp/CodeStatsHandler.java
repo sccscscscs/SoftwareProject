@@ -20,7 +20,6 @@ public class CodeStatsHandler {
     }
     
     /**
-     * 显示语言选择对话框
      * 支持Java、Python、C、C++、C#五种语言，以及统计所有语言的选项
      */
     public void showLanguageSelection() {
@@ -179,7 +178,7 @@ public class CodeStatsHandler {
         resultDialog.setSize(1000, 700);
         resultDialog.setLocationRelativeTo(gui);
         
-        // 创建表格显示结果
+        // 创建表格
         String[] columnNames = {"语言", "源文件数", "代码行数", "空行数", "注释行数", "函数个数", "最大值", "最小值", "均值", "中位数"};
         Object[][] data = new Object[results.size() + 1][10]; // +1 for 总计 row
         
@@ -300,7 +299,6 @@ public class CodeStatsHandler {
     }
     
     /**
-     * 显示统计模式选择对话框
      * 三种模式：代码量统计、函数长度统计 或 都统计
      */
     private void showStatModeSelection(CodeStatsCore.Language language) {
@@ -425,8 +423,7 @@ public class CodeStatsHandler {
     }
     
     /**
-     * 执行代码分析
-     * 根据模式显示不同的统计结果
+     * 根据模式显示不同的统计结果分析处
      */
     private void performCodeAnalysis(CodeStatsCore.Language language, File file, int mode) {
         // 创建进度对话框
@@ -437,8 +434,7 @@ public class CodeStatsHandler {
         progressDialog.add(progressBar, BorderLayout.CENTER);
         progressDialog.setSize(300, 100);
         progressDialog.setLocationRelativeTo(gui);
-        
-        // 在后台线程执行分析
+
         SwingWorker<CodeStatsCore.AnalyzeResult, Void> worker = 
             new SwingWorker<CodeStatsCore.AnalyzeResult, Void>() {
             
