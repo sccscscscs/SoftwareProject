@@ -33,4 +33,6 @@ public interface RollCallService {
     void convertAbsentToLateIfWithin10Min(long recordId, Timestamp responseTime) throws Exception;
 
     List<RollCallRecord> getSessionRecords(long sessionId) throws Exception;
+    // 统计汇总：每个人被点次数/出勤/请假/旷课/迟到（前端表格用）可以汇总学生目前的情况
+    List<StudentStatView> getAllStudentStats() throws Exception;
 }

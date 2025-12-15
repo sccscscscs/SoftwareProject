@@ -135,6 +135,11 @@ public class RollCallServiceImpl implements RollCallService {
         return recordDao.findBySession(sessionId);
     }
 
+    @Override
+    public List<StudentStatView> getAllStudentStats() throws Exception {
+        return statDao.findAllStudentStatsView();
+    }
+
     // ---------------- internal helpers ----------------
 
     private List<Student> selectStudents(List<Student> all, CallType callType, Integer selectedCount, StrategyType strategy) throws Exception {
