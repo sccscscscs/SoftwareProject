@@ -10,6 +10,8 @@ import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.myapp.rollcall.ui.RollCallGUI;
+
 /**
  * 唐老鸭和小鸭子应用主界面
  */
@@ -202,6 +204,7 @@ public class DuckGUI extends JFrame {
             "请输入您的需求：",
             "• 输入\"代码量\"进行代码统计",
             "• 输入\"红包雨\"开始游戏",
+            "• 输入\"点名\"开始点名",
             "• 输入其他内容进行AI对话",
             scrollPane
         };
@@ -255,8 +258,10 @@ public class DuckGUI extends JFrame {
     }
     
     /**
+     * ⚠️老鼠修改
      * 处理用户请求
      * 根据关键词识别用户意图并调用相应功能
+     * 采用策略模式处理不同类型的用户请求
      */
     private void processUserRequest(String request) {
         // 检测代码统计需求
@@ -266,7 +271,11 @@ public class DuckGUI extends JFrame {
         // 检测红包雨需求
         else if (request.contains("红包雨") || request.contains("红包")) {
             startRedPacketRainGame();
-        } 
+        }
+        // ⚠️老鼠修改 - 检测点名需求
+        else if (request.contains("点名")) {
+            startRollCallSystem();
+        }
         // 其他需求调用AI服务
         else {
             callAIService(request);
@@ -283,6 +292,23 @@ public class DuckGUI extends JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, 
                 "启动红包雨游戏失败：" + e.getMessage(), 
+                "错误", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * ⚠️老鼠修改
+     * 启动点名系统
+     * 打开点名系统的主界面
+     */
+    private void startRollCallSystem() {
+        try {
+            RollCallGUI rollCallGUI = new RollCallGUI(this);
+            rollCallGUI.setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "启动点名系统失败：" + e.getMessage(), 
                 "错误", 
                 JOptionPane.ERROR_MESSAGE);
         }

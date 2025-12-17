@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 public final class Db {
     // 鼠要测试记得改成自己的  分别是：数据库名 用户名 密码
+    //🐭：好嘟我直接设置成和你一样的用户名和密码和地址
     private static final String URL =
             "jdbc:mysql://localhost:3306/software_project?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
