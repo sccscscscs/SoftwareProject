@@ -8,16 +8,26 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.myapp.rollcall.model.StudentStatView;
 
@@ -29,6 +39,8 @@ import com.myapp.rollcall.model.StudentStatView;
  */
 public class StatisticsDialog extends JDialog {
     
+    private List<StudentStatView> stats; // ⚠️脆鼠修改：保存统计数据以便导出
+    
     /**
      * ⚠️老鼠修改
      * 构造函数，初始化统计对话框
@@ -37,6 +49,7 @@ public class StatisticsDialog extends JDialog {
      */
     public StatisticsDialog(Dialog parent, List<StudentStatView> stats) {
         super(parent, "📊 考勤统计信息", true);
+        this.stats = stats; // ⚠️脆鼠修改：保存统计数据
         
         // 设置窗口属性
         setSize(800, 600);
@@ -118,8 +131,18 @@ public class StatisticsDialog extends JDialog {
         JPanel summaryPanel = createSummaryPanel(stats);
         mainPanel.add(summaryPanel, BorderLayout.NORTH);
         
-        // 添加关闭按钮
+        // 添加导出和关闭按钮
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        // ⚠️脆鼠修改：添加导出Excel按钮
+        JButton exportButton = new JButton("导出为Excel");
+        exportButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
+        exportButton.setBackground(new Color(76, 175, 80));
+        exportButton.setForeground(Color.WHITE);
+        exportButton.setFocusPainted(false);
+        exportButton.addActionListener(e -> exportToExcel());
+        buttonPanel.add(exportButton);
+        
         JButton closeButton = new JButton("关闭");
         closeButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
         closeButton.setBackground(new Color(158, 158, 158));
@@ -222,5 +245,71 @@ public class StatisticsDialog extends JDialog {
         summaryPanel.add(rateLabel, gbc);
         
         return summaryPanel;
+    }
+    
+    // ⚠️脆鼠修改：实现Excel导出功能
+    private void exportToExcel() {
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("保存Excel文件");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Excel文件 (*.xlsx)", "xlsx"));
+            
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            if (!filePath.endsWith(".xlsx")) {
+                filePath += ".xlsx";
+            }
+            
+            // 创建工作簿
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("考勤统计");
+            
+            // 创建表头
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"学号", "姓名", "班级", "总点名次数", 
+                               "出勤次数", "请假次数", "旷课次数", "迟到次数", "出勤率"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+            
+            // 填充数据
+            int rowNum = 1;
+            for (StudentStatView stat : stats) {
+                Row row = sheet.createRow(rowNum++);
+                
+                row.createCell(0).setCellValue(stat.getStudentId());
+                row.createCell(1).setCellValue(stat.getName());
+                row.createCell(2).setCellValue(stat.getClazz());
+                row.createCell(3).setCellValue(stat.getTotalCalls());
+                row.createCell(4).setCellValue(stat.getAttendanceCount());
+                row.createCell(5).setCellValue(stat.getLeaveCount());
+                row.createCell(6).setCellValue(stat.getAbsenceCount());
+                row.createCell(7).setCellValue(stat.getLateCount());
+                row.createCell(8).setCellValue(calculateAttendanceRate(stat));
+            }
+            
+            // 自动调整列宽
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            
+            // 写入文件
+            FileOutputStream outputStream = new FileOutputStream(filePath);
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+            
+            JOptionPane.showMessageDialog(this, "导出成功！文件保存在：" + filePath, 
+                "导出成功", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "导出失败：" + ex.getMessage(), 
+                "导出失败", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
     }
 }

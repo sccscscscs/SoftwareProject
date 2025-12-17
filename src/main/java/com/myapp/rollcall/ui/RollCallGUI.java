@@ -1,23 +1,60 @@
 package com.myapp.rollcall.ui;
 
-import com.myapp.rollcall.model.*;
-import com.myapp.rollcall.service.RollCallService;
-import com.myapp.rollcall.service.RollCallServiceImpl;
-import com.myapp.rollcall.service.NextCall;
-
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+
+import com.myapp.rollcall.model.AttendanceStatus;
+import com.myapp.rollcall.model.CallType;
+import com.myapp.rollcall.model.RollCallRecord;
+import com.myapp.rollcall.model.StrategyType;
+import com.myapp.rollcall.model.Student;
+import com.myapp.rollcall.model.StudentStatView;
+import com.myapp.rollcall.service.NextCall;
+import com.myapp.rollcall.service.RollCallService;
+import com.myapp.rollcall.service.RollCallServiceImpl;
+
 /**
- * ⚠️老鼠修改
  * 点名系统主界面类
  * 负责点名流程的UI展示和用户交互
  * 采用MVC设计模式，将界面逻辑与业务逻辑分离
@@ -38,21 +75,34 @@ public class RollCallGUI extends JDialog {
     private JButton leaveButton;
     private JButton absentButton;
     private JButton lateButton;
-    private JButton viewStatsButton;
     private JTextArea statusArea;
+    
+    // 添加菜单相关组件
+    private JButton menuButton; // 菜单按钮
+    private JPopupMenu menuPopup; // 弹出菜单
     
     // 语音播报相关
     private boolean voiceEnabled = true;
     private JCheckBox voiceCheckBox;
     
+    // ⚠️脆鼠修改：历史记录相关组件
+    private JPanel historyPanel;
+    private JScrollPane historyScrollPanel;
+    private JPanel historyCardPanel;
+    
     /**
-     * ⚠️老鼠修改
      * 构造函数，初始化点名界面
      * @param parent 父窗口
      */
     public RollCallGUI(Frame parent) {
         super(parent, "📚 智能点名系统", true);
-        this.rollCallService = new RollCallServiceImpl();
+        // ⚠️脆鼠修改：处理SQLException
+        try {
+            this.rollCallService = new RollCallServiceImpl();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "初始化服务失败：" + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            throw new RuntimeException(e);
+        }
         
         // 设置窗口属性
         setSize(800, 600);
@@ -66,155 +116,357 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 初始化所有UI组件
-     * 采用组件化思想，便于维护和扩展
+     * 采用现代化设计风格，提升用户体验
+     * 使用渐变色、圆角边框、阴影效果等视觉元素
      */
     private void initComponents() {
-        // 学生信息显示组件
+        // ⚠️脆鼠修改：定义现代化配色方案
+        Color primaryColor = new Color(70, 130, 180);      // 主色调 - Steel Blue
+        Color successColor = new Color(50, 180, 100);      // 成功色 - 绿色
+        Color warningColor = new Color(255, 180, 40);      // 警告色 - 橙黄色
+        Color dangerColor = new Color(220, 80, 60);        // 危险色 - 红色
+        Color infoColor = new Color(100, 150, 200);        // 信息色 - 蓝色
+        Color lightBg = new Color(245, 247, 250);          // 浅色背景
+        Color cardBg = new Color(255, 255, 255);           // 卡片背景
+        Color textPrimary = Color.BLACK;                   // ⚠️脆鼠修改：主文本色改为黑色
+        Color textSecondary = Color.BLACK;                 // ⚠️脆鼠修改：次要文本色改为黑色
+        Color borderColor = new Color(180, 190, 200);      // 边框颜色
+        
+        // ⚠️脆鼠修改：学生信息显示组件 - 使用卡片式设计
         studentNameLabel = new JLabel("等待点名...", JLabel.CENTER);
-        studentNameLabel.setFont(new Font("微软雅黑", Font.BOLD, 24));
-        studentNameLabel.setForeground(new Color(0, 102, 204));
+        studentNameLabel.setFont(new Font("苹方-简 中等", Font.BOLD, 28));
+        studentNameLabel.setForeground(textPrimary);
         
-        studentIdLabel = new JLabel("学号：", JLabel.CENTER);
-        studentIdLabel.setFont(new Font("微软雅黑", Font.PLAIN, 16));
+        studentIdLabel = new JLabel("🆔 学号：", JLabel.CENTER);
+        studentIdLabel.setFont(new Font("苹方-简 中等", Font.PLAIN, 16));
+        studentIdLabel.setForeground(textSecondary);
         
-        studentClassLabel = new JLabel("班级：", JLabel.CENTER);
-        studentClassLabel.setFont(new Font("微软雅黑", Font.PLAIN, 16));
+        studentClassLabel = new JLabel("🏫 班级：", JLabel.CENTER);
+        studentClassLabel.setFont(new Font("苹方-简 中等", Font.PLAIN, 16));
+        studentClassLabel.setForeground(textSecondary);
         
+        // ⚠️脆鼠修改：照片显示区域 - 圆角边框，不显示默认文字
         photoLabel = new JLabel("", JLabel.CENTER);
-        photoLabel.setPreferredSize(new Dimension(200, 200));
-        photoLabel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2));
-        photoLabel.setBackground(Color.WHITE);
+        photoLabel.setPreferredSize(new Dimension(220, 220));
+        photoLabel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(borderColor, 2), // 更清晰的边框
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        photoLabel.setBackground(cardBg);
         photoLabel.setOpaque(true);
+        // ⚠️脆鼠修改：移除默认文字，只在照片加载失败时显示
+        photoLabel.setFont(new Font("苹方-简 中等", Font.PLAIN, 14));
+        photoLabel.setForeground(textSecondary);
         
-        // 控制按钮
-        startButton = new JButton("🎯 开始点名");
-        startButton.setFont(new Font("微软雅黑", Font.BOLD, 16));
-        startButton.setBackground(new Color(76, 175, 80));
-        startButton.setForeground(Color.WHITE);
-        startButton.setFocusPainted(false);
+        // ⚠️脆鼠修改：控制按钮 - 现代化按钮设计，带圆角和悬停效果
+        startButton = createModernButton("🎯 开始点名", primaryColor, 16);
         
-        attendButton = new JButton("✅ 出勤");
-        attendButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        attendButton.setBackground(new Color(76, 175, 80));
-        attendButton.setForeground(Color.WHITE);
+        attendButton = createModernButton("✅ 出勤", successColor, 14);
         attendButton.setEnabled(false);
         
-        leaveButton = new JButton("📄 请假");
-        leaveButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        leaveButton.setBackground(new Color(255, 193, 7));
-        leaveButton.setForeground(Color.WHITE);
+        leaveButton = createModernButton("📄 请假", warningColor, 14);
         leaveButton.setEnabled(false);
         
-        absentButton = new JButton("❌ 旷课");
-        absentButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        absentButton.setBackground(new Color(244, 67, 54));
-        absentButton.setForeground(Color.WHITE);
+        absentButton = createModernButton("❌ 旷课", dangerColor, 14);
         absentButton.setEnabled(false);
         
-        lateButton = new JButton("⏰ 迟到(10分钟内)");
-        lateButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        lateButton.setBackground(new Color(255, 152, 0));
-        lateButton.setForeground(Color.WHITE);
+        // ⚠️脆鼠修改：迟到按钮，现在作为底部状态按钮之一
+        lateButton = createModernButton("⏰ 迟到", new Color(230, 126, 34), 14);
         lateButton.setEnabled(false);
         
-        viewStatsButton = new JButton("📊 查看统计");
-        viewStatsButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
-        viewStatsButton.setBackground(new Color(33, 150, 243));
-        viewStatsButton.setForeground(Color.WHITE);
-        viewStatsButton.setFocusPainted(false);
+        // ⚠️脆鼠修改：创建菜单按钮和弹出菜单
+        menuButton = createMenuButton();
+        menuPopup = createPopupMenu();
         
-        // 语音播报选项
-        voiceCheckBox = new JCheckBox("🔊 启用语音播报");
-        voiceCheckBox.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        // ⚠️脆鼠修改：语音播报选项 - 现代化复选框
+        voiceCheckBox = new JCheckBox("🔊 语音播报");
+        voiceCheckBox.setFont(new Font("苹方-简 中等", Font.PLAIN, 14));
         voiceCheckBox.setSelected(voiceEnabled);
+        voiceCheckBox.setBackground(cardBg);
+        voiceCheckBox.setForeground(textPrimary);
         
-        // 状态显示区域
-        statusArea = new JTextArea(6, 40);
-        statusArea.setFont(new Font("微软雅黑", Font.PLAIN, 12));
+        // ⚠️脆鼠修改：历史记录显示区域 - 本次点名学生列表
+        statusArea = new JTextArea(8, 45);
+        statusArea.setFont(new Font("JetBrains Mono", Font.PLAIN, 12));
         statusArea.setEditable(false);
-        statusArea.setBackground(new Color(248, 248, 248));
-        statusArea.setBorder(BorderFactory.createTitledBorder("点名状态记录"));
+        statusArea.setBackground(new Color(248, 249, 250));
+        statusArea.setForeground(textPrimary); // ⚠️脆鼠修改：状态区域文本改为黑色
+        statusArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(borderColor, 2), // 更清晰的边框
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        statusArea.setLineWrap(true);
+        statusArea.setWrapStyleWord(true);
+        
+        // ⚠️脆鼠修改：新增历史记录面板 - 显示本次点名已点名学生
+        historyPanel = new JPanel(new BorderLayout());
+        historyPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(borderColor, 2), // 更清晰的边框
+            "本次点名记录"
+        ));
+        historyScrollPanel = new JScrollPane(historyPanel);
+        historyScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        historyScrollPanel.setPreferredSize(new Dimension(300, 400));
+        historyScrollPanel.setBorder(BorderFactory.createLineBorder(borderColor, 1));
+        
+        // ⚠️脆鼠修改：历史记录卡片面板，用于显示学生信息
+        historyCardPanel = new JPanel();
+        historyCardPanel.setLayout(new BoxLayout(historyCardPanel, BoxLayout.Y_AXIS));
+        historyCardPanel.setBackground(new Color(250, 252, 255)); // 设置背景色
+        historyPanel.add(historyCardPanel, BorderLayout.CENTER);
     }
     
     /**
-     * ⚠️老鼠修改
+     * 创建现代化按钮
+     * 统一按钮样式，包含圆角、字体、颜色等属性
+     * @param text 按钮文本
+     * @param bgColor 背景颜色
+     * @param fontSize 字体大小
+     * @return 现代化按钮
+     */
+    private JButton createModernButton(String text, Color bgColor, int fontSize) {
+        JButton button = new JButton(text) {
+            // ⚠️ 添加：重写绘制方法，实现圆角
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // 鼠标按下变深色，否则用背景色
+                g2.setColor(getModel().isPressed() ? bgColor.darker() : bgColor);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15); // 15是圆角弧度
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        
+        button.setFont(new Font("微软雅黑", Font.BOLD, fontSize));
+        button.setForeground(Color.BLACK); // ⚠️脆鼠修改：将按钮字体颜色改为黑色
+        button.setFocusPainted(false); // 去掉点击时的虚线框
+        button.setBorderPainted(false); // 去掉原生边框
+        button.setContentAreaFilled(false); // 去掉原生背景填充
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // 给按钮加一点内边距，看起来更胖更舒服
+        button.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
+        
+        return button;
+    }
+    
+    /**
+     * 创建菜单按钮（类似微信加号）
+     * @return 菜单按钮
+     */
+    private JButton createMenuButton() {
+        JButton menuBtn = new JButton("☰") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // 绘制圆形背景
+                Color bgColor = getModel().isPressed() ? new Color(70, 130, 180).darker() : new Color(70, 130, 180);
+                g2.setColor(bgColor);
+                int diameter = Math.min(getWidth(), getHeight()) - 6;
+                int x = (getWidth() - diameter) / 2;
+                int y = (getHeight() - diameter) / 2;
+                g2.fillOval(x, y, diameter, diameter);
+                
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        
+        menuBtn.setFont(new Font("微软雅黑", Font.BOLD, 18));
+        menuBtn.setForeground(Color.BLACK); // ⚠️脆鼠修改：将菜单按钮字体颜色改为黑色
+        menuBtn.setFocusPainted(false);
+        menuBtn.setBorderPainted(false);
+        menuBtn.setContentAreaFilled(false);
+        menuBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        menuBtn.setToolTipText("更多功能");
+        
+        // 设置按钮大小为圆形
+        menuBtn.setPreferredSize(new Dimension(45, 45));
+        menuBtn.setMaximumSize(new Dimension(45, 45));
+        menuBtn.setMinimumSize(new Dimension(45, 45));
+        
+        return menuBtn;
+    }
+    
+    /**
+     * 创建弹出菜单
+     * @return 配置好的弹出菜单
+     */
+    private JPopupMenu createPopupMenu() {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBackground(new Color(250, 250, 250));
+        
+        // 添加菜单项
+        JMenuItem statsItem = new JMenuItem("📊 查看统计");
+        statsItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        statsItem.setBackground(Color.WHITE);
+        statsItem.setForeground(Color.BLACK); // ⚠️脆鼠修改：将菜单项字体颜色改为黑色
+        statsItem.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        
+        JMenuItem historyItem = new JMenuItem("📝 查看点名历史");
+        historyItem.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        historyItem.setBackground(Color.WHITE);
+        historyItem.setForeground(Color.BLACK); // ⚠️脆鼠修改：将菜单项字体颜色改为黑色
+        historyItem.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        
+        popup.add(statsItem);
+        popup.add(historyItem);
+        
+        // 添加事件监听器
+        statsItem.addActionListener(e -> showStatistics());
+        historyItem.addActionListener(e -> showSessionHistory());
+        
+        return popup;
+    }
+    
+    /**
      * 布局UI组件
      * 使用GridBagLayout实现灵活的响应式布局
      */
     private void layoutComponents() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(12, 12));
+        getContentPane().setBackground(new Color(240, 244, 248)); // 设置窗口背景色
         
         // 顶部面板 - 标题和控制
-        JPanel topPanel = new JPanel(new BorderLayout(10, 5));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
+        JPanel topPanel = new JPanel(new BorderLayout(12, 5));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 5, 12));
+        topPanel.setBackground(new Color(240, 244, 248)); // 设置背景色
         
         JLabel titleLabel = new JLabel("🎓 智能点名系统", JLabel.CENTER);
         titleLabel.setFont(new Font("微软雅黑", Font.BOLD, 28));
-        titleLabel.setForeground(new Color(0, 102, 204));
+        titleLabel.setForeground(Color.BLACK); // ⚠️脆鼠修改：标题改为黑色
         
         topPanel.add(titleLabel, BorderLayout.NORTH);
         
         // 控制面板
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        controlPanel.add(startButton);
-        controlPanel.add(voiceCheckBox);
-        controlPanel.add(viewStatsButton);
+        JPanel controlPanel = new JPanel(new BorderLayout(10, 5));
+        controlPanel.setBackground(new Color(240, 244, 248)); // 设置背景色
+        
+        // 左侧控制按钮
+        JPanel leftControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftControls.setBackground(new Color(240, 244, 248)); // 设置背景色
+        leftControls.add(startButton);
+        leftControls.add(voiceCheckBox);
+        controlPanel.add(leftControls, BorderLayout.WEST);
+        
+        // 右侧菜单按钮
+        JPanel rightControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        rightControls.setBackground(new Color(240, 244, 248)); // 设置背景色
+        rightControls.add(menuButton);
+        controlPanel.add(rightControls, BorderLayout.EAST);
+        
         topPanel.add(controlPanel, BorderLayout.CENTER);
         
         add(topPanel, BorderLayout.NORTH);
         
-        // 中间面板 - 学生信息显示
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // 中间主面板 - 分为左右两个区域
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2, 12, 12));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        mainPanel.setBackground(new Color(240, 244, 248)); // 设置背景色
+        
+        // ⚠️脆鼠修改！：左侧面板 - 点名区，重新调整布局
+        JPanel leftPanel = new JPanel(new GridBagLayout());
+        leftPanel.setBackground(new Color(250, 252, 255)); // 设置背景色
+        leftPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 190, 200), 2), // 更清晰的边框
+            "点名区"
+        ));
+        ((javax.swing.border.TitledBorder) leftPanel.getBorder()).setTitleFont(new Font("微软雅黑", Font.BOLD, 14));
+        ((javax.swing.border.TitledBorder) leftPanel.getBorder()).setTitleColor(Color.BLACK); // ⚠️脆鼠修改：标题改为黑色
         GridBagConstraints gbc = new GridBagConstraints();
         
-        // 照片
+        // ⚠️脆鼠修改！：照片放在上方，居中
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridheight = 3;
-        gbc.insets = new Insets(5, 5, 5, 20);
-        centerPanel.add(photoLabel, gbc);
-        
-        // 学生姓名
-        gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridwidth = 2; // ⚠️脆鼠修改！：横跨两列
         gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        centerPanel.add(studentNameLabel, gbc);
+        gbc.anchor = GridBagConstraints.CENTER; // ⚠️脆鼠修改！：居中对齐
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.7; // ⚠️脆鼠修改！：给照片区域更多垂直空间
+        gbc.fill = GridBagConstraints.NONE; // ⚠️脆鼠修改！：不拉伸，保持原始比例
+        gbc.insets = new Insets(12, 12, 12, 12);
+        leftPanel.add(photoLabel, gbc);
         
-        // 学号
+        // ⚠️脆鼠修改！：学生姓名放在照片下方，居中
+        gbc.gridx = 0;
         gbc.gridy = 1;
-        centerPanel.add(studentIdLabel, gbc);
+        gbc.gridwidth = 2; // ⚠️脆鼠修改！：横跨两列
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.CENTER; // ⚠️脆鼠修改！：居中对齐
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.15; // ⚠️脆鼠修改！：分配适当的垂直空间
+        gbc.fill = GridBagConstraints.HORIZONTAL; // ⚠️脆鼠修改！：水平填满
+        gbc.insets = new Insets(5, 12, 2, 12);
+        leftPanel.add(studentNameLabel, gbc);
         
-        // 班级
+        // ⚠️脆鼠修改！：学号放在姓名下方，居中
         gbc.gridy = 2;
-        centerPanel.add(studentClassLabel, gbc);
+        gbc.weighty = 0.15; // ⚠️脆鼠修改！：分配适当的垂直空间
+        gbc.insets = new Insets(2, 12, 12, 12);
+        leftPanel.add(studentIdLabel, gbc);
         
-        add(centerPanel, BorderLayout.CENTER);
+        // ⚠️脆鼠修改！：班级信息暂时隐藏，因为界面空间有限
+        // 如果需要显示，可以考虑在详细信息中展示
+        //⚠️脆鼠修改
+        // 右侧面板 - 历史记录区
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(new Color(250, 252, 255)); // 设置背景色
+        rightPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 190, 200), 2), // 更清晰的边框
+            "历史记录区"
+        ));
+        ((javax.swing.border.TitledBorder) rightPanel.getBorder()).setTitleFont(new Font("微软雅黑", Font.BOLD, 14));
+        ((javax.swing.border.TitledBorder) rightPanel.getBorder()).setTitleColor(Color.BLACK); // ⚠️脆鼠修改：标题改为黑色
         
-        // 底部面板 - 操作按钮和状态
+        // ⚠️脆鼠修改：移除"旷课学生可转为迟到"标签和按钮
+        // 添加迟到转换按钮到右侧面板顶部
+        // JPanel convertPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // convertPanel.setBackground(new Color(245, 248, 252)); // 设置背景色
+        // convertPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(200, 210, 220)));
+        // JLabel convertLabel = new JLabel("旷课学生可转为迟到：");
+        // convertLabel.setForeground(Color.BLACK); // ⚠️脆鼠修改：标签改为黑色
+        // convertPanel.add(convertLabel);
+        // convertPanel.add(lateButton);
+        // rightPanel.add(convertPanel, BorderLayout.NORTH);
+        
+        // ⚠️脆鼠修改：使用新的历史记录面板显示本次点名学生
+        rightPanel.add(historyScrollPanel, BorderLayout.CENTER);
+        
+        mainPanel.add(leftPanel);
+        mainPanel.add(rightPanel);
+        
+        add(mainPanel, BorderLayout.CENTER);
+        
+        // 底部面板 - 操作按钮
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 12, 12, 12));
+        bottomPanel.setBackground(new Color(240, 244, 248)); // 设置背景色
         
         // 考勤状态按钮面板
-        JPanel statusButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        statusButtonPanel.setBorder(BorderFactory.createTitledBorder("考勤状态"));
+        JPanel statusButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 8));
+        statusButtonPanel.setBackground(new Color(240, 244, 248)); // 设置背景色
+        statusButtonPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 190, 200), 2), // 更清晰的边框
+            "考勤状态"
+        ));
+        ((javax.swing.border.TitledBorder) statusButtonPanel.getBorder()).setTitleFont(new Font("微软雅黑", Font.BOLD, 14));
+        ((javax.swing.border.TitledBorder) statusButtonPanel.getBorder()).setTitleColor(Color.BLACK); // ⚠️脆鼠修改：标题改为黑色
         statusButtonPanel.add(attendButton);
         statusButtonPanel.add(leaveButton);
         statusButtonPanel.add(absentButton);
-        statusButtonPanel.add(lateButton);
+        statusButtonPanel.add(lateButton); // ⚠️脆鼠修改：将迟到按钮添加到状态按钮面板
         
-        bottomPanel.add(statusButtonPanel, BorderLayout.NORTH);
-        bottomPanel.add(new JScrollPane(statusArea), BorderLayout.CENTER);
+        bottomPanel.add(statusButtonPanel, BorderLayout.CENTER);
         
         add(bottomPanel, BorderLayout.SOUTH);
     }
     
     /**
-     * ⚠️老鼠修改
      * 设置事件处理器
      * 采用事件驱动编程模式，实现用户交互响应
      */
@@ -234,8 +486,8 @@ public class RollCallGUI extends JDialog {
         absentButton.addActionListener(e -> markAttendance(AttendanceStatus.ABSENT));
         lateButton.addActionListener(e -> markAttendance(AttendanceStatus.LATE));
         
-        // 查看统计按钮
-        viewStatsButton.addActionListener(e -> showStatistics());
+        // 菜单按钮事件
+        menuButton.addActionListener(e -> menuPopup.show(menuButton, 0, menuButton.getHeight()));
         
         // 语音播报选项
         voiceCheckBox.addActionListener(e -> voiceEnabled = voiceCheckBox.isSelected());
@@ -263,107 +515,152 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 显示点名配置对话框
      * 让用户选择点名方式、人数和策略
+     * 修复了全点时仍可选择策略和人数的问题
+     * 添加了自定义人数输入验证
      */
     private void showRollCallConfigDialog() {
         JDialog configDialog = new JDialog(this, "点名配置", true);
         configDialog.setLayout(new GridBagLayout());
-        configDialog.setSize(400, 300);
+        configDialog.setSize(450, 350);
         configDialog.setLocationRelativeTo(this);
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.anchor = GridBagConstraints.WEST;
-        
+
+        // 获取数据库中学生总数用于验证（添加默认值以防数据库访问失败）
+        final int[] totalStudentCountRef = new int[1]; 
+        try {
+            var studentDao = new com.myapp.rollcall.dao.StudentDao();
+            totalStudentCountRef[0] = studentDao.findAll().size();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "获取学生总数失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            totalStudentCountRef[0] = 100;
+        }
+        final int totalStudentCount = totalStudentCountRef[0];
+
         // 点名方式选择
         gbc.gridx = 0;
         gbc.gridy = 0;
         configDialog.add(new JLabel("点名方式："), gbc);
-        
+
         JComboBox<CallType> callTypeCombo = new JComboBox<>(new CallType[]{CallType.ALL, CallType.RANDOM});
         callTypeCombo.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         gbc.gridx = 1;
         configDialog.add(callTypeCombo, gbc);
-        
+
         // 抽点人数选择
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel countLabel = new JLabel("抽点人数：");
-        countLabel.setEnabled(false);
         configDialog.add(countLabel, gbc);
+
+        // ⚠️脆鼠修改！：优化抽点人数选择面板布局，让自定义输入更明显
+        JPanel countPanel = new JPanel(new BorderLayout(5, 0)); // ⚠️脆鼠修改！：使用BorderLayout让布局更清晰
         
-        JPanel countPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // 上半部分：固定选项
+        JPanel fixedOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         JRadioButton radio10 = new JRadioButton("10人");
         JRadioButton radio15 = new JRadioButton("15人");
         JRadioButton radio20 = new JRadioButton("20人");
-        JRadioButton radioCustom = new JRadioButton("自定义");
-        JTextField customField = new JTextField(5);
         
         ButtonGroup countGroup = new ButtonGroup();
         countGroup.add(radio10);
         countGroup.add(radio15);
         countGroup.add(radio20);
+        
+        fixedOptionsPanel.add(radio10);
+        fixedOptionsPanel.add(radio15);
+        fixedOptionsPanel.add(radio20);
+        
+        // 下半部分：自定义选项（单独一行，更明显）
+        JPanel customOptionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JRadioButton radioCustom = new JRadioButton("自定义");
+        JTextField customField = new JTextField(15); // ⚠️脆鼠修改！：进一步增大输入框宽度
+        customField.setEnabled(false); // 默认禁用
+        customField.setToolTipText("请输入抽点人数"); // ⚠️脆鼠修改！：添加提示信息
+        
         countGroup.add(radioCustom);
         
-        countPanel.add(radio10);
-        countPanel.add(radio15);
-        countPanel.add(radio20);
-        countPanel.add(radioCustom);
-        countPanel.add(new JLabel("数量:"));
-        countPanel.add(customField);
+        customOptionsPanel.add(radioCustom);
+        customOptionsPanel.add(new JLabel("人数:")); // ⚠️脆鼠修改！：更清晰的标签
+        customOptionsPanel.add(customField);
         
+        countPanel.add(fixedOptionsPanel, BorderLayout.NORTH);
+        countPanel.add(customOptionsPanel, BorderLayout.SOUTH);
+
         gbc.gridx = 1;
         configDialog.add(countPanel, gbc);
-        
+
         // 点名策略选择
         gbc.gridx = 0;
         gbc.gridy = 2;
-        configDialog.add(new JLabel("点名策略："), gbc);
-        
+        JLabel strategyLabel = new JLabel("点名策略：");
+        configDialog.add(strategyLabel, gbc);
+
         JComboBox<StrategyType> strategyCombo = new JComboBox<>(
             new StrategyType[]{StrategyType.RANDOM, StrategyType.MOST_ABSENT, StrategyType.LEAST_CALLED}
         );
         strategyCombo.setFont(new Font("微软雅黑", Font.PLAIN, 14));
         gbc.gridx = 1;
         configDialog.add(strategyCombo, gbc);
-        
+
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         JButton confirmButton = new JButton("开始点名");
         JButton cancelButton = new JButton("取消");
-        
+
         confirmButton.setBackground(new Color(76, 175, 80));
         confirmButton.setForeground(Color.WHITE);
         cancelButton.setBackground(new Color(158, 158, 158));
         cancelButton.setForeground(Color.WHITE);
-        
+
         buttonPanel.add(confirmButton);
         buttonPanel.add(cancelButton);
-        
+
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         configDialog.add(buttonPanel, gbc);
-        
-        // 事件处理
+
+        // 修复配置逻辑，全点时完全禁用策略选择和人数选择
         callTypeCombo.addActionListener(e -> {
             boolean isRandom = callTypeCombo.getSelectedItem() == CallType.RANDOM;
+
             countLabel.setEnabled(isRandom);
             radio10.setEnabled(isRandom);
             radio15.setEnabled(isRandom);
             radio20.setEnabled(isRandom);
             radioCustom.setEnabled(isRandom);
-            customField.setEnabled(isRandom);
+            customField.setEnabled(isRandom && radioCustom.isSelected());
+
+            strategyLabel.setEnabled(isRandom);
+            strategyCombo.setEnabled(isRandom);
         });
-        
+
+        // 自定义单选按钮状态变化监听
+        radioCustom.addActionListener(e -> {
+            customField.setEnabled(radioCustom.isSelected());
+            if (radioCustom.isSelected()) {
+                customField.requestFocusInWindow();
+            }
+        });
+
+        // 初始化时设置正确的状态，默认选择全点
+        callTypeCombo.setSelectedItem(CallType.ALL);
+        countLabel.setEnabled(false);
+        strategyLabel.setEnabled(false);
+        strategyCombo.setEnabled(false);
+        customField.setEnabled(false);
+
         confirmButton.addActionListener(e -> {
             try {
                 CallType callType = (CallType) callTypeCombo.getSelectedItem();
                 Integer selectedCount = null;
-                
+
                 if (callType == CallType.RANDOM) {
                     if (radio10.isSelected()) {
                         selectedCount = 10;
@@ -377,9 +674,19 @@ public class RollCallGUI extends JDialog {
                             JOptionPane.showMessageDialog(configDialog, "请输入自定义人数", "错误", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
-                        selectedCount = Integer.parseInt(customText);
-                        if (selectedCount <= 0) {
-                            JOptionPane.showMessageDialog(configDialog, "人数必须大于0", "错误", JOptionPane.ERROR_MESSAGE);
+
+                        try {
+                            selectedCount = Integer.parseInt(customText);
+                            if (selectedCount <= 0) {
+                                JOptionPane.showMessageDialog(configDialog, "人数必须是正数", "错误", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                            if (selectedCount >= totalStudentCount) {
+                                JOptionPane.showMessageDialog(configDialog, "人数必须小于数据库总人数(" + totalStudentCount + "人)", "错误", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(configDialog, "请输入有效的数字", "错误", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                     } else {
@@ -387,27 +694,23 @@ public class RollCallGUI extends JDialog {
                         return;
                     }
                 }
-                
+
                 StrategyType strategy = (StrategyType) strategyCombo.getSelectedItem();
-                
-                // 开始点名
+
                 startRollCall(callType, selectedCount, strategy);
                 configDialog.dispose();
-                
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(configDialog, "请输入有效的数字", "错误", JOptionPane.ERROR_MESSAGE);
+
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(configDialog, "启动点名失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
             }
         });
-        
+
         cancelButton.addActionListener(e -> configDialog.dispose());
-        
+
         configDialog.setVisible(true);
     }
     
     /**
-     * ⚠️老鼠修改
      * 开始点名流程
      * @param callType 点名类型
      * @param selectedCount 抽点人数
@@ -436,7 +739,6 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 结束点名流程
      */
     private void endRollCall() {
@@ -459,10 +761,32 @@ public class RollCallGUI extends JDialog {
         photoLabel.setIcon(null);
         
         statusArea.append("=== 点名结束 ===\n");
+        
+        // ⚠️脆鼠修改：自动显示本次点名统计结果
+        showCurrentSessionStatistics();
+        
+        // ⚠️脆鼠修改：清空历史记录面板
+        historyCardPanel.removeAll();
+        historyCardPanel.revalidate();
+        historyCardPanel.repaint();
     }
     
     /**
-     * ⚠️老鼠修改
+     * ⚠️脆鼠修改：新增功能
+     * 显示当前会话的统计结果
+     */
+    private void showCurrentSessionStatistics() {
+        try {
+            if (currentSessionId != -1) {
+                SessionStatisticsDialog dialog = new SessionStatisticsDialog(this, rollCallService, currentSessionId);
+                dialog.setVisible(true);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "获取点名统计失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
      * 点名下一个学生
      * 采用异步处理，避免UI阻塞
      */
@@ -504,7 +828,6 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 显示学生信息
      * @param student 学生对象
      */
@@ -534,8 +857,9 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 标记考勤状态
+     * 增强记录显示，包含详细的时间戳和状态信息
+     * 迟到功能需要先标记为旷课，然后点击"转为迟到"按钮
      * @param status 考勤状态
      */
     private void markAttendance(AttendanceStatus status) {
@@ -545,25 +869,72 @@ public class RollCallGUI extends JDialog {
             Timestamp responseTime = new Timestamp(System.currentTimeMillis());
             
             if (status == AttendanceStatus.LATE) {
-                // 迟到需要特殊处理
-                rollCallService.convertAbsentToLateIfWithin10Min(currentCall.getRecordId(), responseTime);
+                // ⚠️脆鼠修改：迟到功能说明
+                // 迟到需要先标记为旷课，然后点击"转为迟到"按钮
+                // 这里通过RecordDao直接检查当前记录状态，只有旷课状态才能转为迟到
+                try {
+                    var recordDao = new com.myapp.rollcall.dao.RecordDao();
+                    RollCallRecord currentRecord = recordDao.findById(currentCall.getRecordId());
+                    if (currentRecord != null && currentRecord.getAttendanceStatus() == AttendanceStatus.ABSENT) {
+                        rollCallService.convertAbsentToLateIfWithin10Min(currentCall.getRecordId(), responseTime);
+                        
+                        String record = String.format("[%s] %s (%s) - %s\n", 
+                            responseTime.toString().substring(11, 19),
+                            currentCall.getStudent().getName(),
+                            currentCall.getStudent().getStudentId(),
+                            "⏰ 迟到");
+                        
+                        statusArea.append(record);
+                    } else {
+                        JOptionPane.showMessageDialog(this, 
+                            "⚠️ 迟到功能使用说明：\n" +
+                            "1. 先点击'旷课'按钮标记为旷课\n" +
+                            "2. 然后点击'转为迟到'按钮转为迟到\n" +
+                            "3. 只有在10分钟内才能转为迟到", 
+                            "迟到功能说明", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "检查记录状态失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             } else {
                 rollCallService.markStatus(currentCall.getRecordId(), status, responseTime);
+                
+                // ⚠️脆鼠修改：增强记录显示格式
+                String statusText = "";
+                switch (status) {
+                    case ATTEND:
+                        statusText = "✅ 出勤";
+                        break;
+                    case LEAVE:
+                        statusText = "📄 请假";
+                        break;
+                    case ABSENT:
+                        statusText = "❌ 旷课";
+                        break;
+                    default:
+                        statusText = "❓ 未知";
+                        break;
+                }
+                
+                // 详细记录格式：时间 | 学生姓名 | 学号 | 状态
+                String record = String.format("[%s] %s (%s) - %s\n", 
+                    responseTime.toString().substring(11, 19), // 只显示时间部分
+                    currentCall.getStudent().getName(),
+                    currentCall.getStudent().getStudentId(),
+                    statusText);
+                
+                statusArea.append(record);
             }
             
-            // 更新状态显示
-            String statusText = switch (status) {
-                case ATTEND -> "出勤";
-                case LEAVE -> "请假";
-                case ABSENT -> "旷课";
-                case LATE -> "迟到";
-                default -> "未知";
-            };
+            // ⚠️脆鼠修改：添加学生到历史记录面板
+            addStudentToHistoryPanel(currentCall.getStudent(), status);
             
-            statusArea.append(currentCall.getStudent().getName() + " - " + statusText + "\n");
-            
-            // 点名下一个学生
-            nextStudent();
+            // 点名下一个学生（只有非迟到状态才继续）
+            if (status != AttendanceStatus.LATE) {
+                nextStudent();
+            }
             
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "标记考勤状态失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
@@ -571,8 +942,8 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 显示统计信息
+     * 重构为更简洁的方法
      */
     private void showStatistics() {
         try {
@@ -580,12 +951,36 @@ public class RollCallGUI extends JDialog {
             StatisticsDialog statsDialog = new StatisticsDialog(this, stats);
             statsDialog.setVisible(true);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "获取统计信息失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+            handleException("获取统计信息失败", ex);
         }
     }
     
     /**
-     * ⚠️老鼠修改
+     * ⚠️脆鼠修改：新增功能
+     * 显示点名历史记录
+     */
+    private void showSessionHistory() {
+        try {
+            SessionHistoryDialog dialog = new SessionHistoryDialog(this, rollCallService);
+            dialog.setVisible(true);
+        } catch (Exception ex) {
+            handleException("查看历史记录失败", ex);
+        }
+    }
+    
+    /**
+     * 统一异常处理方法
+     * @param message 错误消息前缀
+     * @param ex 异常对象
+     */
+    private void handleException(String message, Exception ex) {
+        String errorMessage = message + "：" + ex.getMessage();
+        JOptionPane.showMessageDialog(this, errorMessage, "错误", JOptionPane.ERROR_MESSAGE);
+        System.err.println(errorMessage);
+        ex.printStackTrace();
+    }
+    
+    /**
      * 语音播报学生姓名
      * 使用系统默认的语音合成功能
      * @param name 学生姓名
@@ -622,7 +1017,6 @@ public class RollCallGUI extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
      * 获取策略描述文本
      * @param strategy 策略类型
      * @return 策略描述
@@ -633,5 +1027,177 @@ public class RollCallGUI extends JDialog {
             case MOST_ABSENT -> "优先选择旷课次数最多的同学";
             case LEAST_CALLED -> "优先选择点到次数最少的同学";
         };
+    }
+    
+    /**
+     * ⚠️脆鼠修改：新增功能
+     * 添加学生到历史记录面板
+     * 根据考勤状态显示不同的颜色和按钮
+     * @param student 学生对象
+     * @param status 考勤状态
+     */
+    private void addStudentToHistoryPanel(Student student, AttendanceStatus status) {
+        // ⚠️脆鼠修改：创建学生卡片面板
+        JPanel studentCard = createStudentCard(student, status);
+        
+        // 只有非出勤状态的学生才会添加到历史记录面板
+        if (studentCard != null) {
+            historyCardPanel.add(studentCard);
+            historyCardPanel.add(Box.createVerticalStrut(5));
+            
+            // ⚠️脆鼠修改：滚动到最新记录
+            scrollToLatestRecord();
+            
+            historyCardPanel.revalidate();
+            historyCardPanel.repaint();
+        }
+    }
+    
+    /**
+     * 创建学生卡片面板
+     * @param student 学生对象
+     * @param status 考勤状态
+     * @return 学生卡片面板
+     */
+    private JPanel createStudentCard(Student student, AttendanceStatus status) {
+        JPanel studentCard = new JPanel(new BorderLayout(10, 5));
+        studentCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        studentCard.setBackground(Color.WHITE);
+        // 设置固定高度，避免根据内容改变大小
+        studentCard.setPreferredSize(new Dimension(Integer.MAX_VALUE, 50));
+        studentCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        studentCard.setMinimumSize(new Dimension(Integer.MAX_VALUE, 50));
+
+        // 左侧：学生信息
+        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        infoPanel.setOpaque(false);
+        
+        JLabel nameLabel = new JLabel(student.getName() + " (" + student.getStudentId() + ")");
+        nameLabel.setFont(new Font("苹方-简 中等", Font.BOLD, 14));
+        
+        // ⚠️脆鼠修改：根据状态设置颜色
+        switch (status) {
+            case ATTEND:
+                // 出勤学生不显示（跳过）
+                return null;
+            case ABSENT:
+                nameLabel.setForeground(Color.RED);
+                infoPanel.add(nameLabel);
+                
+                // ⚠️脆鼠修改：旷课学生添加转为迟到按钮
+                JButton convertButton = createConvertButton(student, nameLabel, infoPanel);
+                infoPanel.add(convertButton);
+                break;
+            case LEAVE:
+                nameLabel.setForeground(new Color(0, 100, 200)); // 深蓝色表示请假
+                infoPanel.add(nameLabel);
+                break;
+            case LATE:
+                nameLabel.setForeground(new Color(230, 126, 34)); // 橙色
+                infoPanel.add(nameLabel);
+                
+                JLabel lateLabel = new JLabel(" ⏰ 迟到");
+                lateLabel.setForeground(Color.BLACK); // ⚠️脆鼠修改：迟到标签改为黑色
+                infoPanel.add(lateLabel);
+                break;
+            default:
+                nameLabel.setForeground(Color.BLACK); // ⚠️脆鼠修改：默认状态改为黑色
+                infoPanel.add(nameLabel);
+                break;
+        }
+        
+        studentCard.add(infoPanel, BorderLayout.CENTER);
+        return studentCard;
+    }
+    
+    /**
+     * 创建"转为迟到"按钮
+     * @param student 学生对象
+     * @param nameLabel 学生姓名标签
+     * @param infoPanel 信息面板
+     * @return 转换按钮
+     */
+    private JButton createConvertButton(Student student, JLabel nameLabel, JPanel infoPanel) {
+        JButton convertButton = new JButton("转为迟到");
+        convertButton.setFont(new Font("苹方-简 中等", Font.PLAIN, 12));
+        convertButton.setBackground(new Color(255, 165, 0)); // 橙色背景
+        convertButton.setForeground(Color.BLACK); // 黑色字体
+        convertButton.setFocusPainted(false);
+        convertButton.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8)); // 内边距
+        convertButton.setOpaque(true);
+        
+        // 添加边框以增强可见性
+        convertButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 126, 34), 1),
+            convertButton.getBorder()
+        ));
+        
+        // ⚠️脆鼠修改：转为迟到按钮事件
+        convertButton.addActionListener(e -> convertToLate(student, nameLabel, infoPanel, convertButton));
+        
+        return convertButton;
+    }
+    
+    /**
+     * 将学生状态从旷课转换为迟到
+     * @param student 学生对象
+     * @param nameLabel 学生姓名标签
+     * @param infoPanel 信息面板
+     * @param convertButton 转换按钮
+     */
+    private void convertToLate(Student student, JLabel nameLabel, JPanel infoPanel, JButton convertButton) {
+        try {
+            // 获取当前学生的最新记录
+            var recordDao = new com.myapp.rollcall.dao.RecordDao();
+            var records = recordDao.findBySession(currentSessionId);
+            RollCallRecord targetRecord = null;
+            
+            for (RollCallRecord record : records) {
+                if (record.getStudentId().equals(student.getStudentId()) && 
+                    record.getAttendanceStatus() == AttendanceStatus.ABSENT) {
+                    targetRecord = record;
+                    break;
+                }
+            }
+            
+            if (targetRecord != null) {
+                Timestamp responseTime = new Timestamp(System.currentTimeMillis());
+                rollCallService.convertAbsentToLateIfWithin10Min(targetRecord.getRecordId(), responseTime);
+                
+                // ⚠️脆鼠修改：更新历史记录显示
+                statusArea.append(String.format("[%s] %s (%s) - ⏰ 转为迟到\n", 
+                    responseTime.toString().substring(11, 19),
+                    student.getName(),
+                    student.getStudentId()));
+                
+                // ⚠️脆鼠修改：更新界面显示
+                nameLabel.setForeground(new Color(230, 126, 34)); // 橙色表示迟到
+                infoPanel.remove(convertButton);
+                
+                JLabel convertedLabel = new JLabel(" ⏰ 已转为迟到");
+                convertedLabel.setForeground(Color.BLACK); // ⚠️脆鼠修改：标签改为黑色
+                infoPanel.add(convertedLabel);
+                
+                infoPanel.revalidate();
+                infoPanel.repaint();
+            } else {
+                JOptionPane.showMessageDialog(this, "未找到该学生的旷课记录或已超时", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            handleException("转为迟到失败", ex);
+        }
+    }
+    
+    /**
+     * 滚动到最新的历史记录
+     */
+    private void scrollToLatestRecord() {
+        SwingUtilities.invokeLater(() -> {
+            JScrollBar verticalScrollBar = historyScrollPanel.getVerticalScrollBar();
+            verticalScrollBar.setValue(verticalScrollBar.getMaximum());
+        });
     }
 }

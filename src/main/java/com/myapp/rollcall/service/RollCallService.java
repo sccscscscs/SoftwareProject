@@ -1,7 +1,6 @@
 package com.myapp.rollcall.service;
 
 import com.myapp.rollcall.model.*;
-
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -33,6 +32,15 @@ public interface RollCallService {
     void convertAbsentToLateIfWithin10Min(long recordId, Timestamp responseTime) throws Exception;
 
     List<RollCallRecord> getSessionRecords(long sessionId) throws Exception;
+    
+    Session getSessionById(long sessionId) throws Exception;
+    
+    // ⚠️脆鼠修改：添加获取学生信息的方法
+    Student getStudentById(String studentId) throws Exception;
+    
+    // ⚠️脆鼠修改：添加获取所有会话的方法
+    List<Session> getAllSessions() throws Exception;
+    
     // 统计汇总：每个人被点次数/出勤/请假/旷课/迟到（前端表格用）可以汇总学生目前的情况
     List<StudentStatView> getAllStudentStats() throws Exception;
 }
