@@ -19,10 +19,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 
-/**
- * ⚠️脆鼠修改：衣柜处理器 - 软工思想：功能模块化
- * 好处：将换装系统独立出来，提高代码可维护性
- */
+//衣柜处理器
+
 public class WardrobeHandler {
     private final DuckGUI gui;
     
@@ -74,12 +72,10 @@ public class WardrobeHandler {
         // 好处：显示当前穿着状态
         JPanel statusPanel = createStatusPanel(duck);
         
-        // ⚠️脆鼠修改：创建按钮面板 - 软工思想：操作控制
-        // 好处：提供完整的操作选项
+        //创建按钮面板
         JPanel buttonPanel = createButtonPanel(wardrobeDialog, duck);
         
-        // ⚠️脆鼠修改：布局组装 - 软工思想：界面布局
-        // 好处：合理的界面结构
+        //布局组装
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(statusPanel, BorderLayout.SOUTH);
@@ -87,17 +83,13 @@ public class WardrobeHandler {
         wardrobeDialog.add(mainPanel, BorderLayout.CENTER);
         wardrobeDialog.add(buttonPanel, BorderLayout.SOUTH);
         
-        // ⚠️脆鼠修改：美化对话框外观 - 软工思想：视觉设计
-        // 好处：提升用户体验
+        //美化对话框外观
         wardrobeDialog.getContentPane().setBackground(new Color(240, 248, 255));
         
         wardrobeDialog.setVisible(true);
     }
     
-    /**
-     * ⚠️脆鼠修改：添加服装项目到面板 - 软工思想：组件复用
-     * 好处：避免重复代码，提高可维护性
-     */
+    //添加服装项目到面板
     public void addClothingItem(DuckComponent duck, JPanel panel, String itemName, String emoji, String imagePath) {
         JPanel itemPanel = new JPanel(new BorderLayout(10, 0));
         itemPanel.setBackground(Color.WHITE);
@@ -106,11 +98,11 @@ public class WardrobeHandler {
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
         
-        // ⚠️脆鼠修改：创建包含图片的标签
+        //创建包含图片的标签
         JLabel itemLabel = new JLabel(emoji + " " + itemName);
         itemLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
         
-        // ⚠️脆鼠修改：尝试加载图片并添加到标签
+        //尝试加载图片并添加到标签
         try {
             java.net.URL imageUrl = getClass().getResource(imagePath);
             if (imageUrl != null) {
@@ -124,7 +116,7 @@ public class WardrobeHandler {
             System.err.println("无法加载图片: " + imagePath);
         }
         
-        // ⚠️脆鼠修改：预先确定按钮状态文本和颜色，避免点击两次才生效的问题
+        //预先确定按钮状态文本和颜色，避免点击两次才生效的问题
         boolean isWearing = duck.getClothing().contains(itemName);
         String buttonText = isWearing ? "✓ 已穿" : "穿上";
         Color buttonColor = isWearing ? new Color(144, 238, 144) : new Color(173, 216, 230);
@@ -132,11 +124,11 @@ public class WardrobeHandler {
         JButton toggleButton = new JButton(buttonText);
         toggleButton.setFocusPainted(false);
         
-        // ⚠️脆鼠修改：设置按钮的最大尺寸，避免按钮过大
+        //设置按钮的最大尺寸，避免按钮过大
         toggleButton.setMaximumSize(new Dimension(80, 30));
         toggleButton.setPreferredSize(new Dimension(80, 30));
         
-        // ⚠️脆鼠修改：设置按钮背景色
+        //设置按钮背景色
         toggleButton.setBackground(buttonColor);
         
         toggleButton.addActionListener(e -> {
@@ -158,17 +150,13 @@ public class WardrobeHandler {
         panel.add(itemPanel);
     }
     
-    /**
-     * ⚠️脆鼠修改：创建服装分类面板 - 软工思想：组件复用
-     * 好处：统一的分类面板创建逻辑
-     */
+    //创建服装分类面板
     private JPanel createClothingCategoryPanel(DuckComponent duck, String categoryName, 
             String[] clothingNames, String[] emojis, String[] imageFiles) {
         JPanel categoryPanel = new JPanel(new BorderLayout());
         categoryPanel.setBackground(Color.WHITE);
         
-        // ⚠️脆鼠修改：分类标题 - 软工思想：信息层次
-        // 好处：清晰的分类标识
+        //分类标题
         JLabel categoryLabel = new JLabel(categoryName, JLabel.CENTER);
         categoryLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         categoryLabel.setOpaque(true);
@@ -177,14 +165,12 @@ public class WardrobeHandler {
         categoryLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         categoryPanel.add(categoryLabel, BorderLayout.NORTH);
         
-        // ⚠️脆鼠修改：服装选项面板 - 软工思想：网格布局
-        // 好处：整齐的服装展示
+        //服装选项面板
         JPanel clothingPanel = new JPanel(new GridLayout(0, 2, 15, 15));
         clothingPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         clothingPanel.setBackground(Color.WHITE);
         
-        // ⚠️脆鼠修改：添加服装选项 - 软工思想：动态创建
-        // 好处：支持任意数量的服装类型
+        //添加服装选项
         for (int i = 0; i < clothingNames.length; i++) {
             addClothingItem(duck, clothingPanel, clothingNames[i], emojis[i], "/images/" + imageFiles[i] + ".png");
         }
@@ -194,10 +180,7 @@ public class WardrobeHandler {
         return categoryPanel;
     }
     
-    /**
-     * ⚠️脆鼠修改：创建状态显示面板 - 软工思想：状态展示
-     * 好处：实时显示当前穿着状态
-     */
+    //创建状态显示面板
     private JPanel createStatusPanel(DuckComponent duck) {
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -232,16 +215,13 @@ public class WardrobeHandler {
         return statusPanel;
     }
     
-    /**
-     * ⚠️脆鼠修改：创建按钮面板 - 软工思想：操作控制
-     * 好处：提供完整的用户操作
-     */
+    //创建按钮面板
     private JPanel createButtonPanel(JDialog dialog, DuckComponent duck) {
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         buttonPanel.setBackground(new Color(240, 248, 255));
         
-        // ⚠️脆鼠修改：完成按钮 - 软工思想：主要操作
+        //完成按钮
         JButton doneButton = new JButton("✅ 完成换装");
         doneButton.setFont(new Font("SansSerif", Font.BOLD, 14));
         doneButton.setBackground(new Color(76, 175, 80));
@@ -250,7 +230,7 @@ public class WardrobeHandler {
         doneButton.setPreferredSize(new Dimension(120, 35));
         doneButton.addActionListener(e -> dialog.dispose());
         
-        // ⚠️脆鼠修改：清除所有按钮 - 软工思想：快捷操作
+        //清除所有按钮
         JButton clearButton = new JButton("🗑️ 清除所有");
         clearButton.setFont(new Font("SansSerif", Font.BOLD, 14));
         clearButton.setBackground(new Color(220, 53, 69));
@@ -258,14 +238,12 @@ public class WardrobeHandler {
         clearButton.setFocusPainted(false);
         clearButton.setPreferredSize(new Dimension(120, 35));
         clearButton.addActionListener(e -> {
-            // ⚠️脆鼠修改：清除所有服装 - 软工思想：批量操作
-            // 好处：一键清除所有服装
+            //清除所有服装
             for (String clothing : new java.util.ArrayList<>(duck.getClothing())) {
                 duck.removeClothing(clothing);
             }
             duck.repaint();
-            // ⚠️脆鼠修改：刷新状态显示 - 软工思想：实时更新
-            // 好处：状态变化立即反映到界面
+            //刷新状态显示
             dialog.getContentPane().validate();
             dialog.getContentPane().repaint();
         });
@@ -276,39 +254,24 @@ public class WardrobeHandler {
         return buttonPanel;
     }
     
-    /**
-     * ⚠️脆鼠修改：刷新所有按钮状态 - 软工思想：状态同步
-     * 好处：确保所有按钮状态与小鸭子穿着状态一致
-     * 
-     * @param dialog 对话框
-     * @param duck 小鸭子组件
-     */
+    //刷新所有按钮状态
     private void refreshAllButtons(JDialog dialog, DuckComponent duck) {
-        // ⚠️脆鼠修改：遍历对话框中的所有按钮 - 软工思想：组件遍历
-        // 好处：动态更新按钮状态，确保界面一致性
+        //遍历对话框中的所有按钮
         refreshButtonsRecursive(dialog.getContentPane(), duck);
         
-        // ⚠️脆鼠修改：刷新整个对话框 - 软工思想：界面更新
-        // 好处：确保所有变化都显示出来
+        //刷新整个对话框
         dialog.getContentPane().validate();
         dialog.getContentPane().repaint();
     }
     
-    /**
-     * ⚠️脆鼠修改：递归刷新按钮状态 - 软工思想：递归算法
-     * 好处：遍历所有容器，找到所有按钮并更新状态
-     * 
-     * @param container 容器组件
-     * @param duck 小鸭子组件
-     */
+    //递归刷新按钮状态 态
     private void refreshButtonsRecursive(Container container, DuckComponent duck) {
         for (Component component : container.getComponents()) {
             if (component instanceof JButton) {
                 JButton button = (JButton) component;
                 String buttonText = button.getText();
                 
-                // ⚠️脆鼠修改：检查按钮是否对应某个服装 - 软工思想：状态匹配
-                // 好处：根据服装名称更新按钮状态
+                //检查按钮是否对应某个服装
                 if (buttonText.contains("大衣")) {
                     updateButtonState(button, "大衣", duck);
                 } else if (buttonText.contains("毛衣")) {
@@ -323,21 +286,13 @@ public class WardrobeHandler {
                     updateButtonState(button, "蝴蝶结", duck);
                 }
             } else if (component instanceof Container) {
-                // ⚠️脆鼠修改：递归处理子容器 - 软工思想：递归遍历
-                // 好处：确保所有层级的按钮都被更新
+                // 递归处理子容器
                 refreshButtonsRecursive((Container) component, duck);
             }
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：更新单个按钮状态 - 软工思想：状态更新
-     * 好处：根据服装穿着状态更新按钮显示
-     * 
-     * @param button 按钮组件
-     * @param clothingName 服装名称
-     * @param duck 小鸭子组件
-     */
+    //更新单个按钮状态
     private void updateButtonState(JButton button, String clothingName, DuckComponent duck) {
         if (duck.getClothing().contains(clothingName)) {
             button.setText("✓ 已穿");
@@ -348,13 +303,7 @@ public class WardrobeHandler {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：查找父对话框 - 软工思想：组件查找
-     * 好处：通过组件层级查找父对话框
-     * 
-     * @param component 子组件
-     * @return 父对话框，如果找不到则返回null
-     */
+    //查找父对话框
     private JDialog findParentDialog(Component component) {
         Container parent = component.getParent();
         while (parent != null) {

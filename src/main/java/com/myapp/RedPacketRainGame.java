@@ -19,9 +19,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-/**
- * 红包雨游戏(上下左右操控，10秒）
- */
+//红包雨游戏(上下左右操控，10秒）
+
 public class RedPacketRainGame extends JDialog {
     
     private static final int GAME_WIDTH = 800;
@@ -85,9 +84,7 @@ public class RedPacketRainGame extends JDialog {
         startGame();
     }
     
-    /**
-     * 开始游戏
-     */
+    //开始游戏
     private void startGame() {
         gameRunning = true;
         startTime = System.currentTimeMillis();
@@ -140,9 +137,7 @@ public class RedPacketRainGame extends JDialog {
         redPacketSpawnTimer.start();
     }
     
-    /**
-     * 结束游戏
-     */
+    //结束游戏
     private void endGame() {
         gameRunning = false;
         gameTimer.stop();
@@ -161,9 +156,7 @@ public class RedPacketRainGame extends JDialog {
         dispose();
     }
     
-    /**
-     * 玩家类
-     */
+    //玩家类
     class Player {
         int x, y;
         int speed = 5;
@@ -210,9 +203,7 @@ public class RedPacketRainGame extends JDialog {
         }
     }
     
-    /**
-     * 红包类
-     */
+    //红包类
     class RedPacket {
         enum Shape { CIRCLE, SQUARE, TRIANGLE }
         
@@ -239,10 +230,7 @@ public class RedPacketRainGame extends JDialog {
             return new Rectangle(x, y, RED_PACKET_SIZE, RED_PACKET_SIZE);
         }
     }
-    
-    /**
-     * 游戏面板类
-     */
+
     class GamePanel extends JPanel {
         private Font infoFont = new Font("SansSerif", Font.BOLD, 16);
         private Font moneyFont = new Font("SansSerif", Font.BOLD, 20);

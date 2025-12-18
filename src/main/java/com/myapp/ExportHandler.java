@@ -17,19 +17,14 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-/**
- * 处理文件导出相关操作的类
- */
+//处理文件导出相关操作的类
 public class ExportHandler {
     private final DuckGUI gui;
     
     public ExportHandler(DuckGUI gui) {
         this.gui = gui;
     }
-    
-    /**
-     * 导出所有语言统计结果
-     */
+
     public void exportAllLanguageResults(Map<CodeStatsCore.Language, CodeStatsCore.AnalyzeResult> results, File directory, int mode) {
         // 创建文件选择对话框
         JFileChooser fileChooser = new JFileChooser();
@@ -117,9 +112,8 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出为CSV格式
-     */
+    //导出为CSV格式
+
     private void exportToCSV(Map<CodeStatsCore.Language, CodeStatsCore.AnalyzeResult> results, File file, File directory, int mode) throws Exception {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
             // 写入头部
@@ -225,9 +219,8 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出为JSON格式
-     */
+    //导出为JSON格式
+
     private void exportToJSON(Map<CodeStatsCore.Language, CodeStatsCore.AnalyzeResult> results, File file, File directory, int mode) throws Exception {
         try (FileWriter writer = new FileWriter(file)) {
             // 构建JSON对象
@@ -314,9 +307,8 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出为Excel格式
-     */
+    //导出为Excel格式
+
     private void exportToExcel(Map<CodeStatsCore.Language, CodeStatsCore.AnalyzeResult> results, File file, File directory, int mode) throws Exception {
         // 创建工作簿
         Workbook workbook = new XSSFWorkbook();
@@ -448,9 +440,8 @@ public class ExportHandler {
         workbook.close();
     }
     
-    /**
-     * 导出函数统计结果
-     */
+    //导出函数统计结果
+
     public void exportFunctionResults(CodeStatsCore.AnalyzeResult result) {
         // 创建文件选择对话框
         JFileChooser fileChooser = new JFileChooser();
@@ -538,9 +529,8 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出函数为CSV格式
-     */
+    //导出函数为CSV格式
+
     private void exportFunctionToCSV(CodeStatsCore.AnalyzeResult result, File file) throws Exception {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
             // 写入头部
@@ -561,9 +551,7 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出函数为JSON格式
-     */
+    //导出函数为JSON格式
     private void exportFunctionToJSON(CodeStatsCore.AnalyzeResult result, File file) throws Exception {
         try (FileWriter writer = new FileWriter(file)) {
             // 构建JSON对象
@@ -599,9 +587,8 @@ public class ExportHandler {
         }
     }
     
-    /**
-     * 导出函数为Excel格式
-     */
+    //导出函数为Excel格式
+
     private void exportFunctionToExcel(CodeStatsCore.AnalyzeResult result, File file) throws Exception {
         // 创建工作簿
         Workbook workbook = new XSSFWorkbook();
