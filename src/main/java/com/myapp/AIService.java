@@ -10,19 +10,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-  AI 服务（本处使用智谱）
- */
+
+//AI 服务（智谱）
 public class AIService {
 
-    /** 默认接口地址（不需要动） */
+    //默认接口地址（智谱默认）
     private static final String DEFAULT_API_URL =
             "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 
-    /** glm-4-flash */
+    //glm-4-flash
     private static final String DEFAULT_MODEL = "glm-4-flash";
 
-    /** 默认从这个环境变量里读 key */
+    //默认环境变量
     private static final String ENV_API_KEY = "ZHIPU_AI_KEY";
 
     private final String apiKey;
@@ -32,28 +31,20 @@ public class AIService {
     private final int readTimeoutMs;
     private final Gson gson = new Gson();
 
-    // ===== 构造函数区域 =====
-
-    /**
-     * 使用默认配置：
-     * - API Key：从环境变量 ZHIPU_AI_KEY 读取
-     * - 地址：DEFAULT_API_URL
-     * - 模型：glm-4-flash
-     */
+    //使用默认配置：
+    //API Key：从环境变量 ZHIPU_AI_KEY 读取
+    //地址：DEFAULT_API_URL
+    //模型：glm-4-flash
     public AIService() {
         this(System.getenv(ENV_API_KEY));
     }
 
-    /**
-     * 只指定 API Key，其他用默认。
-     */
+    //只指定 API Key，其他用默认。
     public AIService(String apiKey) {
         this(apiKey, DEFAULT_API_URL, DEFAULT_MODEL, 10_000, 30_000);
     }
 
-    /**
-     * 自定义部分
-     */
+    //自定义部分
     public AIService(String apiKey,
                      String apiUrl,
                      String model,
@@ -66,21 +57,16 @@ public class AIService {
         this.readTimeoutMs = readTimeoutMs;
     }
 
-    // ===== 对外主要方法 =====
 
-    /**
-     * 最简单的一轮对话：只发一条 user 消息。
-     */
+    //对外的接口方法
+    //最简单的一轮对话：只发一条 user 消息。
     public String chat(String userMessage) {
         List<Message> messages = new ArrayList<>();
         messages.add(new Message("user", userMessage));
         return chat(messages);
     }
 
-    /**
-     * 支持多轮对话：传入整个 messages 历史。
-     * messages 里元素格式：new Message("user"/"assistant"/"system", "内容")
-     */
+    //支持多轮对话：传入整个 messages 历史
     public String chat(List<Message> messages) {
         // 1. 检查 API Key
         if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
@@ -92,7 +78,7 @@ public class AIService {
             ChatRequest request = new ChatRequest();
             request.model = this.model;
             request.messages = messages;
-            request.temperature = 0.7; // 你想更稳一点可以改小
+            request.temperature = 0.7; //可以改小
             request.maxTokens = null;  // 用服务端默认，也可以改数值
 
             String requestJson = gson.toJson(request);
@@ -211,11 +197,9 @@ public class AIService {
                 + "【模拟回复】目前尚未配置真实 API Key。\n";
     }
 
-    // ===== 内部数据结构（与 JSON 对应）=====
+    // 内部数据结构（与 JSON 对应）
 
-    /**
-     * 对话消息结构：role + content
-     */
+    //对话消息结构：role + content
     public static class Message {
         public String role;
         public String content;
@@ -229,9 +213,7 @@ public class AIService {
         }
     }
 
-    /**
-     * 请求结构体
-     */
+    //请求结构体
     private static class ChatRequest {
         public String model;
         public List<Message> messages;
@@ -242,9 +224,7 @@ public class AIService {
         public Integer maxTokens;
     }
 
-    /**
-     * 正常返回的结构体（只保留我们需要的字段）
-     */
+    //正常返回的结构体（只保留需要的字段）
     private static class ChatResponse {
         public String id;
         public String object;
@@ -271,9 +251,8 @@ public class AIService {
         public int totalTokens;
     }
 
-    /**
-     * 错误返回结构
-     */
+    //错误返回结构
+
     private static class ChatErrorResponse {
         public ChatError error;
     }
