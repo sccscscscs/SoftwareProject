@@ -1,13 +1,26 @@
 package com.myapp.rollcall.service;
 
-import com.myapp.rollcall.dao.*;
-import com.myapp.rollcall.model.*;
-
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.myapp.rollcall.dao.RecordDao;
+import com.myapp.rollcall.dao.SessionDao;
+import com.myapp.rollcall.dao.StatDao;
+import com.myapp.rollcall.dao.StudentDao;
+import com.myapp.rollcall.model.AttendanceStatus;
+import com.myapp.rollcall.model.CallType;
+import com.myapp.rollcall.model.RollCallRecord;
+import com.myapp.rollcall.model.Session;
+import com.myapp.rollcall.model.StrategyType;
+import com.myapp.rollcall.model.Student;
+import com.myapp.rollcall.model.StudentStatView;
 
 public class RollCallServiceImpl implements RollCallService {
 
@@ -19,7 +32,7 @@ public class RollCallServiceImpl implements RollCallService {
     // 内存里保存本次 session 的待点名队列（也可改成每次从DB算，这里先做最常用的）
     private final Map<Long, Deque<String>> sessionQueueMap = new HashMap<>();
 
-    // ⚠️脆鼠修改：显式构造函数处理SQLException
+    // 显式构造函数处理SQLException
     public RollCallServiceImpl() throws SQLException {
         studentDao = new StudentDao();
         sessionDao = new SessionDao();
@@ -59,7 +72,7 @@ public class RollCallServiceImpl implements RollCallService {
         return sessionId;
     }
 
-    // ⚠️脆鼠修改：实现获取学生信息的方法
+    // 实现获取学生信息的方法
     @Override
     public Student getStudentById(String studentId) throws Exception {
         return studentDao.findById(studentId);
@@ -160,13 +173,13 @@ public class RollCallServiceImpl implements RollCallService {
         return sessionDao.findById(sessionId);
     }
     
-    // ⚠️脆鼠修改：实现获取所有会话的方法
+    // 实现获取所有会话的方法
     @Override
     public List<Session> getAllSessions() throws Exception {
         return sessionDao.findAll();
     }
 
-    // ⚠️脆鼠修改：添加缺失的方法实现
+    // 添加缺失的方法实现
     private List<Student> selectStudents(List<Student> all, CallType callType, Integer selectedCount, StrategyType strategy) {
         // 简化的实现，实际应该根据策略选择学生
         if (callType == CallType.ALL) {
@@ -179,13 +192,13 @@ public class RollCallServiceImpl implements RollCallService {
         }
     }
     
-    // ⚠️脆鼠修改：添加缺失的computeLateMinutes方法
+    // 添加computeLateMinutes方法
     private int computeLateMinutes(Timestamp callTime, Timestamp responseTime) {
         long diffInMillis = responseTime.getTime() - callTime.getTime();
         return (int) (diffInMillis / (1000 * 60)); // 转换为分钟
     }
     
-    // ⚠️脆鼠修改：添加缺失的adjustStatAbsentToLate方法
+    // 添加adjustStatAbsentToLate方法
     private void adjustStatAbsentToLate(String studentId) throws SQLException {
         // 手动执行SQL更新统计信息
         String sql = "UPDATE stat SET absence_count = absence_count - 1, late_count = late_count + 1 WHERE student_id = ?";

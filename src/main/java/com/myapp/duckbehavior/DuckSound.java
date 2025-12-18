@@ -16,13 +16,13 @@ public enum DuckSound {
 
     // ⚠️脆鼠修改：小鸭子情绪声音 - 新增三种情绪状态
     // 开心状态
-    DUCKLING_HAPPY("小鸭子：嘎嘎嘎！（开心快乐）", "/sounds/cat.wav"),
+    DUCKLING_HAPPY("小鸭子：嘎嘎嘎！（开心快乐）", "/sounds/happy.wav"),
     
     // 伤心状态  
     DUCKLING_SAD("小鸭子：嘎...（伤心失落）", "/sounds/sad.wav"),
     
     // 自信状态
-    DUCKLING_CONFIDENT("小鸭子：嘎！嘎嘎嘎！（自信满满）", "/sounds/cat.wav");
+    DUCKLING_CONFIDENT("小鸭子：嘎！嘎嘎嘎！（自信满满）", "/sounds/confident.wav");
 
     private final String text;
     private final String wavPath;
