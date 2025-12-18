@@ -4,21 +4,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * 图表可视化面板
- */
+//图表可视化面板
+
 public class ChartPanel extends JPanel {
     
     private List<Integer> data;
     private String chartType; // "bar" 或 "pie"
     private String title;
     
-    /**
-     * 构造函数
-     * @param data 要显示的数据列表
-     * @param chartType 图表类型：bar(柱状图) 或 pie(饼图)
-     * @param title 图表标题
-     */
+    //构造函数
+    //@param data 要显示的数据列表
+    //@param chartType 图表类型：bar(柱状图) 或 pie(饼图)
+    //param title 图表标题
+
     public ChartPanel(List<Integer> data, String chartType, String title) {
         this.data = data;
         this.chartType = chartType;
@@ -55,10 +53,7 @@ public class ChartPanel extends JPanel {
         g2d.dispose();
     }
     
-    /**
-     * 绘制柱状图
-     * 将函数长度分组，显示每个长度范围的函数数量
-     */
+    //绘制柱状图  将函数长度分组，显示每个长度范围的函数数量
     private void drawBarChart(Graphics2D g2d) {
         // 将数据分成5个区间
         int max = data.stream().max(Integer::compareTo).orElse(100);
@@ -145,10 +140,7 @@ public class ChartPanel extends JPanel {
         g2d.drawString("函数长度范围", chartX + chartWidth / 2 - 30, getHeight() - 20);
     }
     
-    /**
-     * 绘制饼图
-     * 按函数长度范围分组，显示占比
-     */
+    //绘制饼图 按函数长度范围分组，显示占比
     private void drawPieChart(Graphics2D g2d) {
         // 将数据分成5个区间
         int max = data.stream().max(Integer::compareTo).orElse(100);
