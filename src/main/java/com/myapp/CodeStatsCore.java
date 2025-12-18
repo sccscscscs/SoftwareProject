@@ -3,15 +3,13 @@ package com.myapp;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** 
- * 所有的数据模型和统计工具
- */
+//所有的数据模型和统计工具
 public class CodeStatsCore {
 
     // 支持的编程语言
     public enum Language { JAVA, PYTHON, C, CPP,CSHARP }
 
-    /** 单个函数/方法的统计 */
+    //单个函数/方法的统计
     public static class FunctionStat {
         public String filePath;
         public String qualName;   // 类名.方法名 / 呵嵌套路径
@@ -35,7 +33,7 @@ public class CodeStatsCore {
         }
     }
 
-    /** 汇总（给前端用的四个数 + count） */
+    //（给前端用的四个数 + count）
     public static class Summary {
         public int count;
         public double mean;
@@ -83,7 +81,7 @@ public class CodeStatsCore {
         }
     }
 
-    /** 代码量统计结果 */
+    //代码量统计结果
     public static class CodeMetrics {
         public int fileCount;        // 文件数量
         public int codeLines;        // 代码行数（不含注释和空行）
@@ -108,7 +106,7 @@ public class CodeStatsCore {
         }
     }
 
-    /** 统一返回体 */
+    //统一返回体
     public static class AnalyzeResult {
         public Summary summary;
         public Map<String, Object> byFile;     // file -> { summary, functions }
@@ -116,7 +114,7 @@ public class CodeStatsCore {
         public CodeMetrics codeMetrics;        // 代码量统计
     }
 
-    /** 由函数列表构造返回 */
+    //由函数列表构造返回
     public static AnalyzeResult buildResult(List<FunctionStat> functions) {
         AnalyzeResult r = new AnalyzeResult();
         List<Integer> lengths = functions.stream().map(f -> f.length).collect(Collectors.toList());
