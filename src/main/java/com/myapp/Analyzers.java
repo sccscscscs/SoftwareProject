@@ -19,21 +19,19 @@ import com.myapp.CodeStatsCore.CodeMetrics;
 import com.myapp.CodeStatsCore.FunctionStat;
 import com.myapp.CodeStatsCore.Language;
 
-/** 
- * 通用接口 - 所有语言分析器都实现此接口
- */
+//通用接口 - 所有语言分析器都实现此接口
 interface CodeAnalyzer {
-    /** 分析代码，返回函数统计信息 */
+    //分析代码，返回函数统计信息
     List<FunctionStat> analyze(String code, String filePath);
     
-    /** 统计代码量（代码行数、注释行数、空行数） */
+    // 统计代码量（代码行数、注释行数、空行数）
     CodeMetrics analyzeCodeMetrics(String code, String filePath);
     
-    /** 返回支持的语言类型 */
+    //返回支持的语言类型
     Language language();
 }
 
-/** —— Java 解析：基于 JavaParser —— */
+//Java 解析：基于 JavaParser
 class JavaAnalyzer implements CodeAnalyzer {
 
     @Override public List<FunctionStat> analyze(String code, String filePath) {
@@ -151,7 +149,7 @@ class JavaAnalyzer implements CodeAnalyzer {
     @Override public Language language() { return Language.JAVA; }
 }
 
-/** —— Python 解析：按缩进规则的轻量实现 —— */
+//Python 解析：按缩进规则的轻量实现
 class PythonAnalyzer implements CodeAnalyzer {
     private static final Pattern DEF_PATTERN =
             Pattern.compile("^\\s*(async\\s+def|def)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(");
@@ -271,7 +269,7 @@ class PythonAnalyzer implements CodeAnalyzer {
     @Override public Language language() { return Language.PYTHON; }
 }
 
-/** —— C# 解析器 —— */
+//C# 解析器
 class CSharpAnalyzer implements CodeAnalyzer {
     // C#函数定义的正则表达式
     private static final Pattern FUNCTION_PATTERN =
@@ -426,7 +424,7 @@ class CSharpAnalyzer implements CodeAnalyzer {
         return Language.CSHARP;
     }
 }
-/** —— C/C++ 解析器 —— */
+// C/C++ 解析器
 class CppAnalyzer implements CodeAnalyzer {
     // C/C++函数定义的正则表达式（简化版）
     private static final Pattern FUNCTION_PATTERN = 
