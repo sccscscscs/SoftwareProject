@@ -35,8 +35,7 @@ public class DuckGUI extends JFrame {
         codeStatsHandler = new CodeStatsHandler(this);
         exportHandler = new ExportHandler(this);
         
-        // ⚠️脆鼠修改：初始化新的处理器 - 软工思想：依赖注入
-        // 好处：将功能分散到专门的类中，便于管理和维护
+        //初始化新的处理器
         animationHandler = new DuckAnimationHandler(this);
         soundHandler = new DuckSoundHandler(this);
         wardrobeHandler = new WardrobeHandler(this);
@@ -49,8 +48,7 @@ public class DuckGUI extends JFrame {
         return exportHandler;
     }
     
-    // ⚠️脆鼠修改：添加getter方法 - 软工思想：访问控制
-    // 好处：提供对私有字段的安全访问
+    //添加getter方法
     public List<DuckComponent> getDucks() {
         return ducks;
     }
@@ -59,8 +57,7 @@ public class DuckGUI extends JFrame {
         this.selectedDuck = duck;
     }
     
-    // ⚠️脆鼠修改：公开换装对话框方法 - 软工思想：功能委托
-    // 好处：将换装功能委托给专门的类处理
+    //公开换装对话框方法
     public void showDressUpDialog(DuckComponent duck) {
         wardrobeHandler.showDressUpDialog(duck);
     }
@@ -108,8 +105,7 @@ public class DuckGUI extends JFrame {
                     g2d.drawLine(i, h - grassHeight, i, h - grassHeight - height);
                 }
                 
-                // ⚠️脆鼠修改：美化标题显示 - 软工思想：视觉层次
-                // 好处：多层次标题设计，提升视觉效果
+                //美化标题显示
                 
                 // 主标题背景
                 g2d.setColor(new Color(255, 255, 255, 200));
@@ -147,9 +143,7 @@ public class DuckGUI extends JFrame {
                 int subWidth = g2d.getFontMetrics().stringWidth(subtitle);
                 g2d.drawString(subtitle, (w - subWidth) / 2, 115);
                 
-                // ⚠️脆鼠修改：添加装饰性元素 - 软工思想：视觉美化
-                // 好处：增加界面的活泼感和趣味性
-                
+                //添加装饰性元素
                 // 添加星星装饰
                 g2d.setColor(new Color(255, 215, 0, 150));
                 for (int i = 0; i < 8; i++) {
@@ -180,8 +174,8 @@ public class DuckGUI extends JFrame {
         // 使用GridBagLayout实现自适应布局
         mainPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        
-        // 创建唐老鸭
+
+
         DuckComponent donaldDuck = new DuckComponent("唐老鸭", true);
         donaldDuck.setCursor(new Cursor(Cursor.HAND_CURSOR));
         donaldDuck.setToolTipText("点击我可以进行代码统计、玩红包雨游戏、AI对话！");
@@ -211,11 +205,11 @@ public class DuckGUI extends JFrame {
         mainPanel.add(donaldDuck, gbc);
         ducks.add(donaldDuck);
         
-        // 创建一个小鸭子容器面板，用于水平排列三只小鸭子
+        //创建一个小鸭子容器面板，用于水平排列三只小鸭子
         JPanel duckRowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         duckRowPanel.setOpaque(false);
         
-        // ⚠️脆鼠修改：创建三只小鸭子，添加点击交互功能
+        //创建三只小鸭子，添加点击交互功能
         String[] duckNames = {"小鸭1号", "小鸭2号", "小鸭3号"};
         for (int i = 0; i < duckNames.length; i++) {
             DuckComponent duck = new DuckComponent(duckNames[i], false);
@@ -223,25 +217,22 @@ public class DuckGUI extends JFrame {
             duck.setToolTipText("你要干啥！");
             final int index = i; // 保存索引用于事件处理
             
-            // ⚠️脆鼠修改：添加小鸭子点击事件处理 - 随机情绪动画 + 换装询问
+            //添加小鸭子点击事件处理
             duck.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    // ⚠️脆鼠修改：执行随机情绪动画 - 软工思想：用户体验
-                    // 好处：点击小鸭子时播放随机情绪动画，完成后询问换装
+                    //执行随机情绪动画
                     duck.performRandomEmotionAnimation();
                 }
                 
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    // ⚠️脆鼠修改：移除鼠标悬停边框效果 - 软工思想：界面美化
-                    // 好处：去除不必要的视觉元素，保持界面简洁
+                    //移除鼠标悬停边框效果
                 }
                 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    // ⚠️脆鼠修改：移除鼠标离开边框处理 - 软工思想：界面一致性
-                    // 好处：保持界面元素的一致性，避免边框闪烁
+                    //移除鼠标离开边框处理
                 }
             });
             duckRowPanel.add(duck);
@@ -258,10 +249,7 @@ public class DuckGUI extends JFrame {
         add(mainPanel);
     }
     
-    /**
-     * 显示唐老鸭的对话框
-     * 用户可以在这里输入各种需求
-     */
+    //显示唐老鸭的对话框 用户可以在这里输入各种需求
     private void showInputDialog() {
         JTextArea textArea = new JTextArea(3, 30);
         textArea.setLineWrap(true);
@@ -329,31 +317,23 @@ public class DuckGUI extends JFrame {
         }
     }
     
-    /**
-     * ⚠️老鼠修改
-     * 处理用户请求
-     * 根据关键词识别用户意图并调用相应功能
-     * 采用策略模式处理不同类型的用户请求
-     */
+    //老鼠修改，处理用户请求，根据关键词识别用户意图并调用相应功能，采用策略模式处理不同类型的用户请求
     private void processUserRequest(String request) {
-        // ⚠️老鼠修改：添加更多关键词匹配 - 软工思想：功能扩展
-        // 好处：支持更多同义词，提升用户体验
+        //添加更多关键词匹配
         if (request.contains("代码") || request.contains("统计")) {
-            // ⚠️老鼠修改：委托给CodeStatsHandler处理 - 软工思想：功能委托
+            //委托给CodeStatsHandler处理
             codeStatsHandler.showLanguageSelection();
         } else if (request.contains("红包") || request.contains("游戏")) {
             startRedPacketRainGame();
         } else if (request.contains("点名")) {
-            // ⚠️老鼠修改：委托给事件处理器 - 软工思想：功能委托
+            //委托给事件处理器
             eventHandler.startRollCallSystem();
         } else {
             callAIService(request);
         }
     }
     
-    /**
-     * 启动红包雨游戏
-     */
+    //启动红包雨游戏
     private void startRedPacketRainGame() {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -368,9 +348,7 @@ public class DuckGUI extends JFrame {
         });
     }
     
-    /**
-     * 调用AI服务
-     */
+    //调用AI服务
     private void callAIService(String userMessage) {
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
             @Override

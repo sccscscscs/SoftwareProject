@@ -8,10 +8,8 @@ public interface RollCallService {
 
     long startSession(CallType callType, Integer selectedCount, StrategyType strategy) throws Exception;
 
-    /**
-     * 获取下一个被点到的学生（并在 DB 里插入一条 PENDING record，保存 call_time）
-     * 如果返回 null 说明点名结束
-     */
+    //获取下一个被点到的学生（并在 DB 里插入一条 PENDING record，保存 call_time）如果返回 null 说明点名结束
+
     NextCall nextStudent(long sessionId) throws Exception;
 
     /**

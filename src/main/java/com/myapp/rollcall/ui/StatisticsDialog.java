@@ -156,7 +156,7 @@ public class StatisticsDialog extends JDialog {
     }
     
     /**
-     * ⚠️老鼠修改
+     * ⚠️鼠修改
      * 布局UI组件
      * 使用BorderLayout进行整体布局
      */

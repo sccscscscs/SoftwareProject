@@ -6,9 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
-/** 
- * 代码统计服务类（三种）
- */
+//代码统计服务类（三种）
 public class CodeStatsService {
     
     // 统计模式常量
@@ -24,13 +22,13 @@ public class CodeStatsService {
             Language.CSHARP, new CSharpAnalyzer()
     );
 
-    /** 前端若直接传代码（不是磁盘文件），用这个结构 */
+    //前端若直接传代码（不是磁盘文件），用这个结构
     public static class InMemoryFile {
         public String path;  // 仅用于显示
         public String code;
     }
 
-    /** 统一请求体：二选一或同时传 */
+    //二选一或同时传
     public static class AnalyzeRequest {
         public Language language;          // 必填：JAVA / PYTHON / C / CPP
         public List<InMemoryFile> files;   // 可选：内存代码
@@ -38,17 +36,14 @@ public class CodeStatsService {
         public int mode = MODE_FUNCTION_LENGTH; // 统计模式，默认为函数长度统计
     }
 
-    /** 如果前端输入“代码量”，识别并使用 */
+    //如果前端输入“代码量”，识别并使用
     public static boolean isCodeStatIntent(String userInput) {
         return userInput != null && userInput.contains("代码量");
     }
 
-    /** 
-     * 主入口：根据模式返回不同的统计结果
-     * MODE_CODE_METRICS：返回代码量统计（文件数、代码行数、注释行数）
-     * MODE_FUNCTION_LENGTH：返回函数长度统计（均值/最大/最小/中位数 + 函数明细）
-     * MODE_BOTH：返回代码量统计和函数长度统计
-     */
+    //主入口：根据模式返回不同的统计结果   MODE_CODE_METRICS：返回代码量统计（文件数、代码行数、注释行数）
+    //MODE_FUNCTION_LENGTH：返回函数长度统计（均值/最大/最小/中位数 + 函数明细）
+    //MODE_BOTH：返回代码量统计和函数长度统计
     public AnalyzeResult analyze(AnalyzeRequest req) {
         if (req == null || req.language == null)
             throw new IllegalArgumentException("language 不能为空");
@@ -70,7 +65,7 @@ public class CodeStatsService {
         }
     }
     
-    /** 代码量统计*/
+    //代码量统计
     private AnalyzeResult analyzeCodeMetrics(AnalyzeRequest req, CodeAnalyzer analyzer) {
         CodeMetrics totalMetrics = new CodeMetrics();
         
@@ -107,7 +102,7 @@ public class CodeStatsService {
         return result;
     }
     
-    /** 函数长度统计 */
+    // 函数长度统计
     private AnalyzeResult analyzeFunctionLength(AnalyzeRequest req, CodeAnalyzer analyzer) {
         List<FunctionStat> all = new ArrayList<>();
 
@@ -137,7 +132,7 @@ public class CodeStatsService {
         return CodeStatsCore.buildResult(all);
     }
     
-    /** 都统计 */
+    //都统计
     private AnalyzeResult analyzeBoth(AnalyzeRequest req, CodeAnalyzer analyzer) {
         // 先执行代码量
         AnalyzeResult codeMetricsResult = analyzeCodeMetrics(req, analyzer);
@@ -154,7 +149,7 @@ public class CodeStatsService {
         return result;
     }
 
-    /** 判断文件扩展名是否匹配语言类型 */
+    //判断文件扩展名是否匹配语言类型
     private boolean matchExt(Path path, Language lang) {
         String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
         return switch (lang) {
@@ -168,7 +163,7 @@ public class CodeStatsService {
         };
     }
 
-    /** 读取文件并分析函数 */
+    //读取文件并分析函数
     private List<FunctionStat> readAndAnalyze(CodeAnalyzer analyzer, Path fp) {
         try {
             String code = Files.readString(fp, StandardCharsets.UTF_8);
@@ -178,7 +173,7 @@ public class CodeStatsService {
         }
     }
     
-    /** 读取文件并分析代码量 */
+    //读取文件并分析代码量
     private CodeMetrics readAndAnalyzeMetrics(CodeAnalyzer analyzer, Path fp) {
         try {
             String code = Files.readString(fp, StandardCharsets.UTF_8);

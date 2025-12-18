@@ -17,12 +17,8 @@ public class DuckAnimationHandler {
         this.gui = gui;
     }
 
-    /**
-     * 执行鸭子动画 - 软工思想：策略模式
-     * 
-     * @param duck 鸭子组件
-     * @param action 鸭子动作
-     */
+    //执行鸭子动画
+     // @param duck 鸭子组件    @param action 鸭子动作
     public void executeDuckAnimation(DuckComponent duck, DuckAction action) {
         switch (action) {
             case SHAKE:
@@ -44,19 +40,14 @@ public class DuckAnimationHandler {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：执行摇晃动画 - 软工思想：简单动画
-     * 
-     * @param duck 鸭子组件
-     */
+    //执行摇晃动画
+    //@param duck 鸭子组件
     public void executeShakeAnimation(DuckComponent duck) {
         final int[] shakeOffset = {0};
         final int maxOffset = 5; // 最大偏移量
         final int shakeSpeed = 50; // 摇晃速度（毫秒）
         
         Timer shakeTimer = new Timer(shakeSpeed, e -> {
-            // ⚠️脆鼠修改：实现左右摇晃效果 - 软工思想：周期性动画
-            // 好处：简单的正弦波摇晃效果
             shakeOffset[0] += maxOffset;
             
             // 应用偏移量
@@ -73,12 +64,7 @@ public class DuckAnimationHandler {
         
         shakeTimer.start();
     }
-    
-    /**
-     * ⚠️脆鼠修改：执行跳跃动画 - 软工思想：垂直位移动画
-     * 
-     * @param duck 鸭子组件
-     */
+    //执行跳跃动画
     public void executeHopAnimation(DuckComponent duck) {
         final int[] hopOffset = {0};
         final int maxHopHeight = 20; // 最大跳跃高度
@@ -103,33 +89,28 @@ public class DuckAnimationHandler {
         hopTimer.start();
     }
     
-    /**
-     * ⚠️脆鼠修改：执行旋转动画 - 软工思想：2D图形变换
-     * 
-     * @param duck 鸭子组件
-     */
+    //执行旋转动画
     public void executeSpinAnimation(DuckComponent duck) {
         final double[] rotationAngle = {0.0};
         final double rotationStep = 15.0; // 每帧旋转角度
         final int maxFrames = 24; // 旋转360度需要的帧数
         
         Timer spinTimer = new Timer(20, e -> {
-            // ⚠️脆鼠修改：使用AffineTransform实现旋转 - 软工思想：2D图形变换
-            // 好处：使用标准的2D变换API，确保旋转效果平滑
+            //确保旋转效果平滑
             rotationAngle[0] += rotationStep;
             
-            // ⚠️脆鼠修改：创建旋转变换
+            //创建旋转变换
             AffineTransform transform = new AffineTransform();
             transform.rotate(Math.toRadians(rotationAngle[0]), 
                           duck.getWidth() / 2.0, 
                           duck.getHeight() / 2.0);
             
-            // ⚠️脆鼠修改：应用变换到鸭子组件
+            //应用变换到鸭子组件
             // 注意：这里简化实现，实际可能需要更复杂的图形处理
             duck.repaint(); // 触发重绘，在paintComponent中应用变换
             
             if (rotationAngle[0] >= 360.0) {
-                // ⚠️脆鼠修改：动画结束恢复原始状态
+                // 动画结束恢复原始状态
                 rotationAngle[0] = 0.0;
                 ((Timer) e.getSource()).stop();
             }
@@ -138,34 +119,22 @@ public class DuckAnimationHandler {
         spinTimer.start();
     }
     
-    /**
-     * ⚠️脆鼠修改：执行挥手动画 - 软工思想：复合动画
-     * 
-     * @param duck 鸭子组件
-     */
+    //执行挥手动画
     public void executeWaveAnimation(DuckComponent duck) {
-        // ⚠️脆鼠修改：挥手动画 = 小幅摇晃 + 视觉提示
+        // 挥手动画：小幅摇晃 +视觉提示
         executeShakeAnimation(duck);
         
-        // ⚠️脆鼠修改：添加视觉提示
+        // 添加视觉提示
         SwingUtilities.invokeLater(() -> {
             // 可以在这里添加特殊的视觉效果，比如星星、音符等
             duck.repaint();
         });
     }
     
-    /**
-     * ⚠️脆鼠修改：绘制星星装饰 - 软工思想：图形绘制
-     * 好处：为界面添加星星装饰元素，增加趣味性
-     * 
-     * @param g2d 图形上下文
-     * @param x 星星中心X坐标
-     * @param y 星星中心Y坐标
-     * @param size 星星大小
-     */
+    //绘制星星装饰
+
     public void drawStar(Graphics2D g2d, int x, int y, int size) {
-        // ⚠️脆鼠修改：使用多边形绘制五角星 - 软工思想：几何图形
-        // 好处：标准的五角星绘制算法
+        //使用多边形绘制五角星
         int[] xPoints = new int[10];
         int[] yPoints = new int[10];
         

@@ -34,8 +34,7 @@ public class DuckComponent extends JComponent {
     //添加小鸭子默认图片，小鸭子初始化时显示smallduck.png
     private Image smallDuckImage; // 小鸭子默认图片
     
-    // ⚠️脆鼠修改：情绪状态相关属性 - 软工思想：状态管理
-    // 好处：支持三种情绪状态的图片切换
+    //情绪状态相关属性
     private String currentEmotion = "normal"; // 当前情绪：normal/happy/sad/confident
     private Image happyImage; // 开心状态图片
     private Image sadImage; // 伤心状态图片
@@ -78,22 +77,20 @@ public class DuckComponent extends JComponent {
         // 好处：保存组件的原始位置，用于动画后恢复
         originalPosition = new Point(0, 0);
         
-        // ⚠️脆鼠修改：加载鸭子图片 - 软工思想：资源预加载
-        // 好处：提前加载图片，避免绘制时延迟
+        // 加载鸭子图片
+        //提前加载图片，避免绘制时延迟
         loadDuckImage();
         
-        // ⚠️脆鼠修改：确保组件可显示 - 软工思想：组件可见性保证
-        // 好处：确保组件总是可见，避免因为透明背景等问题看不见
+        // 确保组件可显示
         setOpaque(false);
         
-        // ⚠️脆鼠修改：设置组件无焦点框 - 软工思想：用户体验优化
-        // 好处：避免点击时出现难看的焦点框
+        // 设置组件无焦点框
         setFocusable(false);
         this.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
                 if (this.isShowing()) {
-                    // ⚠️脆鼠修改：保存原始位置 - 软工思想：状态管理
-                    // 好处：在组件显示时保存当前位置作为原始位置
+                    //保存原始位置
+                    // 在组件显示时保存当前位置作为原始位置
                     if (originalPosition.x == 0 && originalPosition.y == 0) {
                         originalPosition = getLocation();
                     }
@@ -103,10 +100,7 @@ public class DuckComponent extends JComponent {
         });
     }
     
-    /*
-     * ⚠️脆鼠修改：加载鸭子图片 - 软工思想：资源管理
-     * 好处：统一图片加载逻辑，支持情绪图片切换
-     */
+    //加载鸭子图片
     private void loadDuckImage() {
         try {
             if (isDonald) {
@@ -138,13 +132,11 @@ public class DuckComponent extends JComponent {
                     System.err.println("无法找到唐老鸭图片: " + imagePath);
                 }
             } else {
-                // ⚠️脆鼠修改：小鸭子先加载默认图片，再加载情绪图片
-                // 好处：小鸭子初始化时显示smallduck.png
+                // 小鸭子先加载默认图片，再加载情绪图片
                 loadSmallDuckImage();
                 loadEmotionImages();
                 
-                // ⚠️脆鼠修改：加载服装图片
-                // 好处：支持真实服装图片显示
+                // 加载服装图片
                 loadClothingImages();
             }
         } catch (Exception e) {
@@ -153,17 +145,13 @@ public class DuckComponent extends JComponent {
             imageLoaded = false;
         }
         
-        // ⚠️脆鼠修改：触发重绘 - 软工思想：状态更新通知
-        // 好处：确保图片加载完成后立即显示
+        // 触发重绘
         if (imageLoaded) {
             SwingUtilities.invokeLater(this::repaint);
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：加载小鸭子默认图片 - 软工思想：初始化管理
-     * 好处：小鸭子初始化时显示smallduck.png
-     */
+    //加载小鸭子默认图片
     private void loadSmallDuckImage() {
         try {
             String imagePath = "/images/smallduck.png";
@@ -171,8 +159,7 @@ public class DuckComponent extends JComponent {
             
             if (imageUrl != null) {
                 ImageIcon imageIcon = new ImageIcon(imageUrl);
-                // ⚠️脆鼠修改：放大图片尺寸 - 软工思想：用户体验优先
-                // 好处：让小鸭子更大更清晰，提升视觉效果
+                // 放大图片尺寸
                 int maxWidth = 200;
                 int maxHeight = 250;
                 
@@ -191,12 +178,10 @@ public class DuckComponent extends JComponent {
                     newWidth, newHeight, Image.SCALE_SMOOTH
                 );
                 
-                // ⚠️脆鼠修改：设置默认图片为小鸭子图片 - 软工思想：状态初始化
-                // 好处：小鸭子初始显示smallduck.png
+                // 设置默认图片为小鸭子图片
                 duckImage = smallDuckImage;
                 currentEmotion = "normal";
-                imageLoaded = true; // ⚠️脆鼠修改：设置图片加载标志 - 软工思想：状态管理
-                // 好处：确保图片加载状态正确，影响绘制逻辑
+                imageLoaded = true; //置图片加载标志
                 
                 System.out.println("成功加载小鸭子默认图片: smallduck.png");
             } else {
@@ -208,28 +193,23 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：加载情绪图片 - 软工思想：资源预加载
-     * 好处：预加载所有情绪图片，实现快速切换
-     */
+    //加载情绪图片
     private void loadEmotionImages() {
         try {
-            // ⚠️脆鼠修改：加载三种情绪图片 - 支持动态切换
+            // 加载三种情绪图片
             String[] emotionNames = {"happy", "sad", "confident"};
-            Image[] emotionImages = new Image[3]; // ⚠️脆鼠修改：正确初始化数组
+            Image[] emotionImages = new Image[3]; // 正确初始化数组
             
             boolean allLoaded = true;
             
             for (int i = 0; i < emotionNames.length; i++) {
-                // ⚠️脆鼠修改：使用正确的图片路径 - 软工思想：资源路径修正
-                // 好处：使用实际存在的图片文件路径
+                // 使用正确的图片路径
                 String imagePath = "/images/" + emotionNames[i] + ".png";
                 java.net.URL imageUrl = getClass().getResource(imagePath);
                 
                 if (imageUrl != null) {
                     ImageIcon imageIcon = new ImageIcon(imageUrl);
-                    // ⚠️脆鼠修改：放大图片尺寸 - 软工思想：用户体验优先
-                    // 好处：让小鸭子更大更清晰，提升视觉效果
+                    // 放大图片尺寸
                     int maxWidth = 200;
                     int maxHeight = 250;
                     
@@ -254,8 +234,7 @@ public class DuckComponent extends JComponent {
                 }
             }
             
-            // ⚠️脆鼠修改：只有所有图片都加载成功才更新 - 软工思想：原子性更新
-            // 好处：避免部分图片加载成功造成的显示不一致
+            // 只有所有图片都加载成功才更新
             if (allLoaded) {
                 // 更新情绪图片数组
                 this.happyImage = emotionImages[0];
@@ -272,13 +251,10 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：加载服装图片 - 软工思想：资源预加载
-     * 好处：预加载所有服装图片，实现快速切换，支持动态扩展
-     */
+    //加载服装图片
     private void loadClothingImages() {
         try {
-            // ⚠️脆鼠修改：加载所有服装图片 - 支持分类管理
+            // 加载所有服装图片
             // 冬装：大衣、毛衣
             loadClothingImage("大衣", "dayi");
             loadClothingImage("毛衣", "maoyi");
@@ -300,24 +276,16 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：加载单个服装图片 - 软工思想：模块化设计
-     * 好处：便于动态添加新的服装类型，代码复用性高
-     * 
-     * @param clothingName 服装名称
-     * @param imageFileName 图片文件名
-     */
+    //加载单个服装图片
     private void loadClothingImage(String clothingName, String imageFileName) {
         try {
-            // ⚠️脆鼠修改：使用中文图片文件名 - 软工思想：国际化支持
-            // 好处：支持中文文件名，便于管理
+            //使用中文图片文件名
             String imagePath = "/images/" + imageFileName + ".png";
             java.net.URL imageUrl = getClass().getResource(imagePath);
             
             if (imageUrl != null) {
                 ImageIcon imageIcon = new ImageIcon(imageUrl);
-                // ⚠️脆鼠修改：放大服装图片尺寸 - 软工思想：用户体验优化
-                // 好处：服装图片更大更清晰，提升视觉效果
+                //放大服装图片尺寸
                 int maxWidth = 120;
                 int maxHeight = 140;
                 
@@ -337,8 +305,7 @@ public class DuckComponent extends JComponent {
                     newWidth, newHeight, Image.SCALE_SMOOTH
                 );
                 
-                // ⚠️脆鼠修改：根据服装名称设置对应的图片属性 - 软工思想：动态属性赋值
-                // 好处：统一管理，便于扩展新的服装类型
+                //根据服装名称设置对应的图片属性
                 switch (clothingName) {
                     case "帽子":
                         hatImage = scaledImage;
@@ -365,8 +332,7 @@ public class DuckComponent extends JComponent {
                 
                 System.out.println("成功加载服装图片: " + clothingName);
             } else {
-                // ⚠️脆鼠修改：服装图片缺失时的处理 - 软工思想：优雅降级
-                // 好处：即使部分图片缺失也不影响整体功能
+                //服装图片缺失时的处理
                 System.out.println("未找到服装图片（可选）: " + imagePath + " 对应服装: " + clothingName);
             }
         } catch (Exception e) {
@@ -374,40 +340,28 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：执行随机情绪动画 - 软工思想：交互体验
-     * 好处：点击小鸭子时随机切换情绪并播放动画
-     */
+    //执行随机情绪动画
     public void performRandomEmotionAnimation() {
         if (isDonald || !emotionImagesLoaded || isAnimating) {
             return; // 唐老鸭或图片未加载或正在动画时不执行
         }
         
-        // ⚠️脆鼠修改：随机选择情绪 - 软工思想：随机性
-        // 好处：增加交互的趣味性和不可预测性
+        //随机选择情绪
         String[] emotions = {"happy", "sad", "confident"};
         Random random = new Random();
         String randomEmotion = emotions[random.nextInt(emotions.length)];
         
-        // ⚠️脆鼠修改：设置情绪并播放声音 - 软工思想：多感官反馈
-        // 好处：视觉和听觉双重反馈
+        //设置情绪并播放声音
         setEmotion(randomEmotion);
         
-        // ⚠️脆鼠修改：播放对应声音 - 软工思想：声音反馈
-        // 好处：增强用户体验
+        //播放对应声音
         playCorrespondingSound(randomEmotion);
         
-        // ⚠️脆鼠修改：播放动画 - 软工思想：动画效果
-        // 好处：流畅的动画效果
+        //播放动画
         playAnimationAndReturn(randomEmotion);
     }
     
-    /**
-     * ⚠️脆鼠修改：播放对应声音 - 软工思想：声音管理
-     * 好处：根据情绪播放对应的声音文件
-     * 
-     * @param emotion 情绪类型
-     */
+    //播放对应声音
     private void playCorrespondingSound(String emotion) {
         try {
             String soundFile;
@@ -437,17 +391,11 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：播放动画并返回 - 软工思想：动画控制
-     * 好处：播放流畅的动画，完成后返回原始状态
-     * 
-     * @param emotion 情绪类型
-     */
+    //脆鼠修改：播放动画并返回
     private void playAnimationAndReturn(String emotion) {
         isAnimating = true;
         
-        // ⚠️脆鼠修改：根据情绪选择动画 - 软工思想：策略模式
-        // 好处：不同情绪对应不同的动画效果
+        //根据情绪选择动画
         switch (emotion) {
             case "happy":
                 playHappyAnimation();
@@ -464,25 +412,20 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：播放开心动画 - 软工思想：动画实现
-     * 好处：上下跳跃的开心动画
-     */
+    //播放开心动画
     private void playHappyAnimation() {
         final int[] frameCount = {0};
         final int maxFrames = 20;
         
         animationTimer = new Timer(50, e -> {
             if (frameCount[0] < maxFrames) {
-                // ⚠️脆鼠修改：上下跳跃效果 - 软工思想：位移动画
-                // 好处：模拟开心的跳跃动作
+                //上下跳跃效果
                 int offset = (int) (10 * Math.sin(Math.PI * frameCount[0] / 10));
                 setLocation(getX(), getY() + offset);
                 repaint();
                 frameCount[0]++;
             } else {
-                // ⚠️脆鼠修改：动画完成，返回原始状态 - 软工思想：状态恢复
-                // 好处：确保动画完成后回到原位
+                //动画完成，返回原始状态
                 completeAnimationAndReturnToNormal();
             }
         });
@@ -490,25 +433,20 @@ public class DuckComponent extends JComponent {
         animationTimer.start();
     }
     
-    /**
-     * ⚠️脆鼠修改：播放伤心动画 - 软工思想：动画实现
-     * 好处：左右摇晃的伤心动画
-     */
+    //播放伤心动画
     private void playSadAnimation() {
         final int[] frameCount = {0};
         final int maxFrames = 15;
         
         animationTimer = new Timer(80, e -> {
             if (frameCount[0] < maxFrames) {
-                // ⚠️脆鼠修改：左右摇晃效果 - 软工思想：周期性动画
-                // 好处：模拟伤心的摇晃动作
+                //左右摇晃效果
                 int offset = (int) (8 * Math.sin(Math.PI * frameCount[0] / 3));
                 setLocation(getX() + offset, getY());
                 repaint();
                 frameCount[0]++;
             } else {
-                // ⚠️脆鼠修改：动画完成，返回原始状态 - 软工思想：状态恢复
-                // 好处：确保动画完成后回到原位
+                //动画完成，返回原始状态
                 completeAnimationAndReturnToNormal();
             }
         });
@@ -516,24 +454,19 @@ public class DuckComponent extends JComponent {
         animationTimer.start();
     }
     
-    /**
-     * ⚠️脆鼠修改：播放自信动画 - 软工思想：动画实现
-     * 好处：原地旋转的自信动画
-     */
+    //播放自信动画
     private void playConfidentAnimation() {
         final int[] frameCount = {0};
         final int maxFrames = 24;
         
         animationTimer = new Timer(30, e -> {
             if (frameCount[0] < maxFrames) {
-                // ⚠️脆鼠修改：原地旋转效果 - 软工思想：旋转变换
-                // 好处：模拟自信的旋转动作
+                //原地旋转效果
                 setLocation(originalPosition); // 确保在原位置旋转
                 repaint();
                 frameCount[0]++;
             } else {
-                // ⚠️脆鼠修改：动画完成，返回原始状态 - 软工思想：状态恢复
-                // 好处：确保动画完成后回到原位
+                // 动画完成，返回原始状态
                 completeAnimationAndReturnToNormal();
             }
         });
@@ -541,39 +474,30 @@ public class DuckComponent extends JComponent {
         animationTimer.start();
     }
     
-    /**
-     * ⚠️脆鼠修改：完成动画并返回正常状态 - 软工思想：状态管理
-     * 好处：动画完成后回到smallduck.png并询问换装
-     */
+    //完成动画并返回正常状态
     private void completeAnimationAndReturnToNormal() {
         if (animationTimer != null) {
             animationTimer.stop();
             animationTimer = null;
         }
         
-        // ⚠️脆鼠修改：返回原始位置 - 软工思想：位置恢复
-        // 好处：确保小鸭子回到原始位置
+        //返回原始位置
         setLocation(originalPosition);
         
-        // ⚠️脆鼠修改：返回小鸭子默认图片 - 软工思想：状态恢复
-        // 好处：动画完成后显示smallduck.png
+        //返回小鸭子默认图片
         duckImage = smallDuckImage;
         currentEmotion = "normal";
         
         isAnimating = false;
         repaint();
         
-        // ⚠️脆鼠修改：询问是否换装 - 软工思想：交互引导
-        // 好处：动画完成后引导用户进行换装
+        //询问是否换装
         SwingUtilities.invokeLater(() -> {
             showDressUpPrompt();
         });
     }
     
-    /**
-     * ⚠️脆鼠修改：显示换装询问 - 软工思想：用户交互
-     * 好处：动画完成后询问用户是否要换装
-     */
+    //显示换装询问
     private void showDressUpPrompt() {
         int result = javax.swing.JOptionPane.showConfirmDialog(
             this,
@@ -584,8 +508,7 @@ public class DuckComponent extends JComponent {
         );
         
         if (result == javax.swing.JOptionPane.YES_OPTION) {
-            // ⚠️脆鼠修改：触发换装对话框 - 软工思想：功能调用
-            // 好处：用户确认后打开换装界面
+            //触发换装对话框
             SwingUtilities.invokeLater(() -> {
                 // 寻找父容器中的DuckGUI实例
                 java.awt.Container parent = getParent();
@@ -600,12 +523,7 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：设置鸭子情绪 - 软工思想：状态管理
-     * 好处：提供情绪切换接口，支持交互反馈
-     * 
-     * @param emotion 情绪类型：happy/sad/confident/normal
-     */
+    //脆鼠修改：设置鸭子情绪
     public void setEmotion(String emotion) {
         if (isDonald || !emotionImagesLoaded) {
             return; // 唐老鸭或图片未加载时不支持情绪切换
@@ -631,14 +549,10 @@ public class DuckComponent extends JComponent {
                 break;
         }
         
-        repaint(); // ⚠️脆鼠修改：触发重绘 - 软工思想：观察者模式
-        // 好处：状态变化时自动更新界面
+        repaint(); //触发重绘
     }
     
-    /**
-     * ⚠️脆鼠修改：获取当前情绪 - 软工思想：封装性
-     * 好处：提供状态查询接口
-     */
+    //获取当前情绪
     public String getCurrentEmotion() {
         return currentEmotion;
     }
@@ -647,53 +561,37 @@ public class DuckComponent extends JComponent {
         return name;
     }
     
-    /**
-     * ⚠️脆鼠修改：添加服装 - 软工思想：业务规则实现
-     * 好处：实现"小鸭子只能穿一件衣服，但可以有多个装饰品"的规则
-     * 
-     * @param item 服装名称
-     */
+    //添加服装
     public void addClothing(String item) {
-        // ⚠️脆鼠修改：判断服装类型 - 软工思想：分类管理
-        // 好处：根据服装类型应用不同的规则
+        //判断服装类型
         String category = getClothingCategory(item);
         
         if (CATEGORY_WINTER.equals(category)) {
-            // ⚠️脆鼠修改：处理冬装（只能穿一件） - 软工思想：互斥原则
-            // 好处：穿冬装时移除所有其他衣服
+            //处理冬装（只能穿一件）
             removeClothingByCategory(CATEGORY_WINTER);
             removeClothingByCategory(CATEGORY_SUMMER);
         } else if (CATEGORY_SUMMER.equals(category)) {
-            // ⚠️脆鼠修改：处理夏装（只能穿一件） - 软工思想：互斥原则
-            // 好处：穿夏装时移除所有其他衣服
+            //处理夏装（只能穿一件）
             removeClothingByCategory(CATEGORY_WINTER);
             removeClothingByCategory(CATEGORY_SUMMER);
         }
-        // ⚠️脆鼠修改：装饰品类服装可以重复穿戴 - 软工思想：非互斥原则
-        // 好处：允许小鸭子佩戴多个装饰品
+        //装饰品类服装可以重复穿戴
         
-        // ⚠️脆鼠修改：避免重复穿戴相同物品 - 软工思想：唯一性原则
-        // 好处：防止同一件衣服被重复添加
+        //避免重复穿戴相同物品
         clothing.removeIf(c -> c.equals(item));
         
-        // 添加新物品
+        //添加新物品
         clothing.add(item);
         
-        // ⚠️脆鼠修改：立即强制重绘 - 软工思想：实时反馈
-        // 好处：换装时立即显示效果，确保用户看到变化
+        //立即强制重绘
         SwingUtilities.invokeLater(() -> {
             revalidate();
             repaint();
         });
     }
     
-    /**
-     * ⚠️脆鼠修改：根据服装名称获取分类 - 软工思想：分类逻辑
-     * 好处：统一管理服装分类，便于扩展
-     * 
-     * @param clothingName 服装名称
-     * @return 服装分类
-     */
+    //根据服装名称获取分类
+
     private String getClothingCategory(String clothingName) {
         switch (clothingName) {
             case "大衣":
@@ -710,28 +608,17 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：移除指定分类的所有服装 - 软工思想：批量操作
-     * 好处：快速清理指定分类的服装，确保规则执行
-     * 
-     * @param category 服装分类
-     */
+    //移除指定分类的所有服装
     private void removeClothingByCategory(String category) {
         if (CATEGORY_WINTER.equals(category)) {
             clothing.removeIf(c -> "大衣".equals(c) || "毛衣".equals(c));
         } else if (CATEGORY_SUMMER.equals(category)) {
             clothing.removeIf(c -> "背带裤".equals(c) || "明袍".equals(c));
         }
-        // ⚠️脆鼠修改：装饰品不移除 - 软工思想：保留装饰品
-        // 好处：装饰品可以与衣服共存
+        // 装饰品不移除
     }
     
-    /**
-     * ⚠️脆鼠修改：获取当前穿着的衣服 - 软工思想：状态查询
-     * 好处：快速获取小鸭子当前的衣服
-     * 
-     * @return 当前穿着的衣服名称，如果没有则返回null
-     */
+    //获取当前穿着的衣服
     public String getCurrentClothing() {
         for (String item : clothing) {
             String category = getClothingCategory(item);
@@ -742,12 +629,7 @@ public class DuckComponent extends JComponent {
         return null;
     }
     
-    /**
-     * ⚠️脆鼠修改：获取当前佩戴的装饰品 - 软工思想：状态查询
-     * 好处：获取小鸭子的所有装饰品
-     * 
-     * @return 装饰品列表
-     */
+    //获取当前佩戴的装饰品
     public List<String> getCurrentAccessories() {
         List<String> accessories = new ArrayList<>();
         for (String item : clothing) {
@@ -760,8 +642,7 @@ public class DuckComponent extends JComponent {
     
     public void removeClothing(String item) {
         clothing.remove(item);
-        // ⚠️脆鼠修改：实时重绘 - 软工思想：实时反馈
-        // 好处：移除服装时立即显示效果
+        //实时重绘
         repaint();
     }
     
@@ -805,8 +686,7 @@ public class DuckComponent extends JComponent {
             g2d.fillOval(centerX - 80, 10, 160, 260);
         }
         
-        // ⚠️脆鼠修改：只使用真实图片，删除手绘代码 - 软工思想：简化实现
-        // 好处：统一使用图片资源，简化代码逻辑
+        //只使用真实图片，删除手绘代码
         if (imageLoaded && duckImage != null) {
             // 使用真实图片绘制鸭子
             int imageWidth = duckImage.getWidth(null);
@@ -817,9 +697,7 @@ public class DuckComponent extends JComponent {
             // 绘制鸭子图片
             g2d.drawImage(duckImage, imageX, imageY, this);
         }
-        // ⚠️脆鼠修改：删除后备手绘方案 - 软工思想：专注图片实现
-        // 好处：避免绘制逻辑冗余，专注使用图片资源
-        
+        //删除后备手绘方案
         // 绘制配饰
         drawAccessories(g2d, centerX, isDonald ? 60 : 70);
         
@@ -843,13 +721,9 @@ public class DuckComponent extends JComponent {
         g2d.dispose();
     }
     
-    /**
-     * ⚠️脆鼠修改：绘制所有服装和配饰 - 软工思想：统一渲染
-     * 好处：支持所有服装类型的图片显示，按照合理层次顺序绘制
-     */
+    //绘制所有服装和配饰
     private void drawAccessories(Graphics2D g2d, int centerX, int startY) {
-        // ⚠️脆鼠修改：按照层次顺序绘制服装 - 软工思想：渲染层次
-        // 好处：确保服装显示层次合理，装饰品在最上层
+        //按照层次顺序绘制服装
         
         // 第一层：冬装（大衣、毛衣）
         if (clothing.contains("大衣") && clothingImagesLoaded && dayiImage != null) {
@@ -907,8 +781,5 @@ public class DuckComponent extends JComponent {
             
             g2d.drawImage(hudiejieImage, bowX, bowY, null);
         }
-        
-        // ⚠️脆鼠修改：移除眼镜绘制 - 软工思想：简化功能
-        // 好处：专注于现有服装图片，避免功能过于复杂
     }
 }

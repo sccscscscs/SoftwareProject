@@ -9,9 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-/**
- * 处理代码统计相关操作的类
- */
+//处理代码统计相关操作的类
+
 public class CodeStatsHandler {
     private final DuckGUI gui;
     
@@ -19,9 +18,7 @@ public class CodeStatsHandler {
         this.gui = gui;
     }
     
-    /**
-     * 支持Java、Python、C、C++、C#五种语言，以及统计所有语言的选项
-     */
+    //支持Java、Python、C、C++、C#五种语言，以及统计所有语言的选项
     public void showLanguageSelection() {
         String[] options = {"Java", "Python", "C", "C++", "C#", "所有语言"};
         int choice = JOptionPane.showOptionDialog(
@@ -56,9 +53,7 @@ public class CodeStatsHandler {
         }
     }
     
-    /**
-     * 显示所有语言统计模式选择对话框
-     */
+    //显示所有语言统计模式选择对话框
     private void showAllLanguageStatModeSelection() {
         String[] options = {"代码量统计", "函数长度统计", "都统计"};
         int choice = JOptionPane.showOptionDialog(
@@ -86,9 +81,7 @@ public class CodeStatsHandler {
         }
     }
     
-    /**
-     * 显示所有语言文件选择对话框
-     */
+    //显示所有语言文件选择对话框
     private void showAllLanguageFileSelectionDialog(int mode) {
         // 创建文件选择对话框
         JFileChooser fileChooser = new JFileChooser();
@@ -102,9 +95,8 @@ public class CodeStatsHandler {
         }
     }
     
-    /**
-     * 执行所有语言的代码分析
-     */
+    //执行所有语言的代码分析
+
     private void performAllLanguageCodeAnalysis(File directory, int mode) {
         // 创建进度对话框
         JDialog progressDialog = new JDialog(gui, "分析中", true);
@@ -168,9 +160,7 @@ public class CodeStatsHandler {
         progressDialog.setVisible(true);
     }
     
-    /**
-     * 显示所有语言的代码量统计结果
-     */
+    //显示所有语言的代码量统计结果
     private void showAllLanguageCodeMetricsResult(Map<CodeStatsCore.Language, CodeStatsCore.AnalyzeResult> results, File directory, int mode) {
         // 创建结果对话框
         JDialog resultDialog = new JDialog(gui, "所有语言代码统计结果", true);
@@ -298,9 +288,7 @@ public class CodeStatsHandler {
         resultDialog.setVisible(true);
     }
     
-    /**
-     * 三种模式：代码量统计、函数长度统计 或 都统计
-     */
+    //三种模式：代码量统计、函数长度统计或都统计
     private void showStatModeSelection(CodeStatsCore.Language language) {
         String[] options = {"代码量统计", "函数长度统计", "都统计"};
         int choice = JOptionPane.showOptionDialog(
@@ -328,9 +316,7 @@ public class CodeStatsHandler {
         }
     }
     
-    /**
-     * 显示文件选择对话框
-     */
+    //显示文件选择对话框
     private void showFileSelectionDialog(CodeStatsCore.Language language, int mode) {
         // 创建文件选择对话框
         JFileChooser fileChooser = new JFileChooser();
@@ -350,9 +336,7 @@ public class CodeStatsHandler {
         }
     }
     
-    /**
-     * 创建文件过滤器
-     */
+    //创建文件过滤器
     private javax.swing.filechooser.FileFilter createFileFilter(CodeStatsCore.Language language) {
         return switch (language) {
             case JAVA -> new javax.swing.filechooser.FileFilter() {
@@ -422,9 +406,7 @@ public class CodeStatsHandler {
         };
     }
     
-    /**
-     * 根据模式显示不同的统计结果分析处
-     */
+    //根据模式显示不同的统计结果分析处
     private void performCodeAnalysis(CodeStatsCore.Language language, File file, int mode) {
         // 创建进度对话框
         JDialog progressDialog = new JDialog(gui, "分析中", true);
@@ -478,9 +460,7 @@ public class CodeStatsHandler {
         progressDialog.setVisible(true);
     }
     
-    /**
-     * 显示代码量统计结果
-     */
+    //显示代码量统计结果
     private void showCodeMetricsResult(CodeStatsCore.AnalyzeResult result) {
         if (result.codeMetrics == null) {
             JOptionPane.showMessageDialog(gui, 
@@ -515,9 +495,7 @@ public class CodeStatsHandler {
             JOptionPane.INFORMATION_MESSAGE);
     }
     
-    /**
-     * 显示函数长度统计结果（带图表）
-     */
+    //显示函数长度统计结果（带图表）
     private void showFunctionLengthResult(CodeStatsCore.AnalyzeResult result) {
         if (result.summary == null || result.summary.count == 0) {
             JOptionPane.showMessageDialog(gui, 
@@ -577,9 +555,7 @@ public class CodeStatsHandler {
         resultDialog.setVisible(true);
     }
     
-    /**
-     * 显示代码量和函数长度统计结果（都统计）
-     */
+    //显示代码量和函数长度统计结果（都统计）
     private void showBothResult(CodeStatsCore.AnalyzeResult result) {
         // 创建结果对话框
         JDialog resultDialog = new JDialog(gui, "代码量和函数长度统计结果", true);
