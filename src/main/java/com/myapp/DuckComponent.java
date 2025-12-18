@@ -8,15 +8,12 @@ import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.io.IOException;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO;
+
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 /**
@@ -27,6 +24,26 @@ public class DuckComponent extends JComponent {
     private final boolean isDonald;
     private final List<String> clothing = new ArrayList<>();
     private boolean isSelected = false; // 是否被选中（用于交互效果）
+    
+    // ⚠️脆鼠修改：添加图片相关属性 - 软工思想：资源管理
+    // 好处：统一管理图片资源，提高性能
+    private Image duckImage; // 鸭子图片
+    private boolean imageLoaded = false; // 图片是否成功加载
+    
+    // ⚠️脆鼠修改：情绪状态相关属性 - 软工思想：状态管理
+    // 好处：支持三种情绪状态的图片切换
+    private String currentEmotion = "normal"; // 当前情绪：normal/happy/sad/confident
+    private Image happyImage; // 开心状态图片
+    private Image sadImage; // 伤心状态图片
+    private Image confidentImage; // 自信状态图片
+    private boolean emotionImagesLoaded = false; // 情绪图片是否加载成功
+    
+    // ⚠️脆鼠修改：服装图片相关属性 - 软工思想：资源管理
+    // 好处：支持真实服装图片显示，替代手绘
+    private Image hatImage; // 帽子图片
+    private Image beidaikuImage; // 背带裤图片
+    private Image hudiejieImage; // 蝴蝶结图片
+    private boolean clothingImagesLoaded = false; // 服装图片是否加载成功
     
     // 服装风格类型
     public static final String STYLE_CASUAL = "休闲装";
@@ -39,6 +56,219 @@ public class DuckComponent extends JComponent {
         this.name = name;
         this.isDonald = isDonald;
         setPreferredSize(new Dimension(220, 300)); // 增大小鸭子尺寸
+        
+        // ⚠️脆鼠修改：加载鸭子图片 - 软工思想：资源预加载
+        // 好处：提前加载图片，避免绘制时延迟
+        loadDuckImage();
+    }
+    
+    /**
+     * ⚠️脆鼠修改：加载鸭子图片 - 软工思想：资源管理
+     * 好处：统一图片加载逻辑，支持情绪图片切换
+     */
+    private void loadDuckImage() {
+        try {
+            if (isDonald) {
+                // 唐老鸭只加载一种图片
+                String imagePath = "/images/largeduck.png";
+                java.net.URL imageUrl = getClass().getResource(imagePath);
+                
+                if (imageUrl != null) {
+                    ImageIcon imageIcon = new ImageIcon(imageUrl);
+                    int maxWidth = 120;
+                    int maxHeight = 150;
+                    
+                    int originalWidth = imageIcon.getIconWidth();
+                    int originalHeight = imageIcon.getIconHeight();
+                    
+                    double scale = Math.min(
+                        (double) maxWidth / originalWidth,
+                        (double) maxHeight / originalHeight
+                    );
+                    
+                    int newWidth = (int) (originalWidth * scale);
+                    int newHeight = (int) (originalHeight * scale);
+                    
+                    duckImage = imageIcon.getImage().getScaledInstance(
+                        newWidth, newHeight, Image.SCALE_SMOOTH
+                    );
+                    imageLoaded = true;
+                }
+            } else {
+                // ⚠️脆鼠修改：小鸭子加载三种情绪图片
+                // 好处：支持动态情绪切换
+                loadEmotionImages();
+                
+                // ⚠️脆鼠修改：加载服装图片
+                // 好处：支持真实服装图片显示
+                loadClothingImages();
+            }
+        } catch (Exception e) {
+            System.err.println("加载鸭子图片时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            imageLoaded = false;
+        }
+    }
+    
+    /**
+     * ⚠️脆鼠修改：加载情绪图片 - 软工思想：资源预加载
+     * 好处：预加载所有情绪图片，实现快速切换
+     */
+    private void loadEmotionImages() {
+        try {
+            // ⚠️脆鼠修改：加载三种情绪图片 - 支持动态切换
+            String[] emotionNames = {"happy", "sad", "confident"};
+            Image[] emotionImages = new Image[3]; // ⚠️脆鼠修改：正确初始化数组
+            
+            boolean allLoaded = true;
+            
+            for (int i = 0; i < emotionNames.length; i++) {
+                String imagePath = "/images/" + emotionNames[i] + ".png";
+                java.net.URL imageUrl = getClass().getResource(imagePath);
+                
+                if (imageUrl != null) {
+                    ImageIcon imageIcon = new ImageIcon(imageUrl);
+                    // ⚠️脆鼠修改：放大图片尺寸 - 提升视觉效果
+                    int maxWidth = 140; // 增大尺寸
+                    int maxHeight = 170; // 增大尺寸
+                    
+                    int originalWidth = imageIcon.getIconWidth();
+                    int originalHeight = imageIcon.getIconHeight();
+                    
+                    double scale = Math.min(
+                        (double) maxWidth / originalWidth,
+                        (double) maxHeight / originalHeight
+                    );
+                    
+                    int newWidth = (int) (originalWidth * scale);
+                    int newHeight = (int) (originalHeight * scale);
+                    
+                    emotionImages[i] = imageIcon.getImage().getScaledInstance(
+                        newWidth, newHeight, Image.SCALE_SMOOTH
+                    );
+                } else {
+                    System.err.println("无法找到情绪图片: " + imagePath);
+                    allLoaded = false;
+                }
+            }
+            
+            // 赋值给实例变量
+            happyImage = emotionImages[0];
+            sadImage = emotionImages[1];
+            confidentImage = emotionImages[2];
+            
+            // ⚠️脆鼠修改：设置当前图片为默认开心状态
+            duckImage = happyImage;
+            currentEmotion = "happy";
+            emotionImagesLoaded = allLoaded;
+            imageLoaded = allLoaded;
+            
+        } catch (Exception e) {
+            System.err.println("加载情绪图片时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            emotionImagesLoaded = false;
+        }
+    }
+    
+    /**
+     * ⚠️脆鼠修改：加载服装图片 - 软工思想：资源管理
+     * 好处：预加载所有服装图片，支持真实图片显示
+     */
+    private void loadClothingImages() {
+        try {
+            // ⚠️脆鼠修改：加载三种服装图片
+            // 好处：支持真实服装图片，替代手绘
+            String[] clothingNames = {"hat", "beidaiku", "hudiejie"};
+            Image[] clothingImages = new Image[3]; // ⚠️脆鼠修改：正确初始化数组
+            
+            boolean allLoaded = true;
+            
+            for (int i = 0; i < clothingNames.length; i++) {
+                String imagePath = "/images/" + clothingNames[i] + ".png";
+                java.net.URL imageUrl = getClass().getResource(imagePath);
+                
+                if (imageUrl != null) {
+                    ImageIcon imageIcon = new ImageIcon(imageUrl);
+                    // ⚠️脆鼠修改：调整服装图片尺寸
+                    // 好处：合适的尺寸比例，避免过大或过小
+                    int maxWidth = 80; // 服装图片宽度限制
+                    int maxHeight = 80; // 服装图片高度限制
+                    
+                    int originalWidth = imageIcon.getIconWidth();
+                    int originalHeight = imageIcon.getIconHeight();
+                    
+                    double scale = Math.min(
+                        (double) maxWidth / originalWidth,
+                        (double) maxHeight / originalHeight
+                    );
+                    
+                    int newWidth = (int) (originalWidth * scale);
+                    int newHeight = (int) (originalHeight * scale);
+                    
+                    clothingImages[i] = imageIcon.getImage().getScaledInstance(
+                        newWidth, newHeight, Image.SCALE_SMOOTH
+                    );
+                } else {
+                    System.err.println("无法找到服装图片: " + imagePath);
+                    allLoaded = false;
+                }
+            }
+            
+            // 赋值给实例变量
+            hatImage = clothingImages[0];
+            beidaikuImage = clothingImages[1];
+            hudiejieImage = clothingImages[2];
+            
+            clothingImagesLoaded = allLoaded;
+            
+        } catch (Exception e) {
+            System.err.println("加载服装图片时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            clothingImagesLoaded = false;
+        }
+    }
+    
+    /**
+     * ⚠️脆鼠修改：设置鸭子情绪 - 软工思想：状态管理
+     * 好处：提供情绪切换接口，支持交互反馈
+     * 
+     * @param emotion 情绪类型：happy/sad/confident/normal
+     */
+    public void setEmotion(String emotion) {
+        if (isDonald || !emotionImagesLoaded) {
+            return; // 唐老鸭或图片未加载时不支持情绪切换
+        }
+        
+        switch (emotion.toLowerCase()) {
+            case "happy":
+                duckImage = happyImage;
+                currentEmotion = "happy";
+                break;
+            case "sad":
+                duckImage = sadImage;
+                currentEmotion = "sad";
+                break;
+            case "confident":
+                duckImage = confidentImage;
+                currentEmotion = "confident";
+                break;
+            case "normal":
+            default:
+                duckImage = happyImage; // 默认开心状态
+                currentEmotion = "happy";
+                break;
+        }
+        
+        repaint(); // ⚠️脆鼠修改：触发重绘 - 软工思想：观察者模式
+        // 好处：状态变化时自动更新界面
+    }
+    
+    /**
+     * ⚠️脆鼠修改：获取当前情绪 - 软工思想：封装性
+     * 好处：提供状态查询接口
+     */
+    public String getCurrentEmotion() {
+        return currentEmotion;
     }
     
     public String getName() {
@@ -117,11 +347,25 @@ public class DuckComponent extends JComponent {
             g2d.fillOval(centerX - 80, 10, 160, 260);
         }
         
-        // 始终使用手绘方式绘制鸭子
-        if (isDonald) {
-            drawDonaldDuck(g2d, centerX, 60);
+        // ⚠️脆鼠修改：优先使用真实图片，后备手绘 - 软工思想：优雅降级
+        // 好处：如果图片加载成功则使用图片，否则使用手绘作为后备方案
+        if (imageLoaded && duckImage != null) {
+            // 使用真实图片绘制鸭子
+            int imageWidth = duckImage.getWidth(null);
+            int imageHeight = duckImage.getHeight(null);
+            int imageX = centerX - imageWidth / 2;
+            int imageY = 50; // 图片绘制的Y位置
+            
+            // 绘制鸭子图片
+            g2d.drawImage(duckImage, imageX, imageY, null);
         } else {
-            drawBabyDuck(g2d, centerX, 70);
+            // ⚠️脆鼠修改：图片加载失败时使用手绘后备方案 - 软工思想：容错机制
+            // 好处：确保即使图片缺失，用户仍能看到鸭子
+            if (isDonald) {
+                drawDonaldDuck(g2d, centerX, 60);
+            } else {
+                drawBabyDuck(g2d, centerX, 70);
+            }
         }
         
         // 绘制配饰
@@ -481,20 +725,32 @@ public class DuckComponent extends JComponent {
     }
     
     /**
-     * 绘制帽子
+     * ⚠️脆鼠修改：绘制帽子 - 软工思想：优先使用真实图片
+     * 好处：真实图片替代手绘，提升视觉效果
      */
     private void drawHat(Graphics2D g2d, int centerX, int startY) {
-        // 帽子顶部
-        g2d.setColor(new Color(255, 0, 0)); // 红色帽子
-        g2d.fillOval(centerX - 30, startY, 60, 18);
-        
-        // 帽子主体
-        g2d.setColor(new Color(200, 0, 0));
-        g2d.fillRoundRect(centerX - 25, startY + 5, 50, 25, 12, 12);
-        
-        // 帽子装饰
-        g2d.setColor(Color.YELLOW);
-        g2d.fillOval(centerX - 7, startY + 12, 14, 14);
+        // ⚠️脆鼠修改：优先使用真实帽子图片
+        if (clothingImagesLoaded && hatImage != null) {
+            int hatWidth = hatImage.getWidth(null);
+            int hatHeight = hatImage.getHeight(null);
+            int hatX = centerX - hatWidth / 2;
+            int hatY = startY - 20; // 稍微调整位置
+            
+            g2d.drawImage(hatImage, hatX, hatY, null);
+        } else {
+            // ⚠️脆鼠修改：后备手绘方案
+            // 帽子顶部
+            g2d.setColor(new Color(255, 0, 0)); // 红色帽子
+            g2d.fillOval(centerX - 30, startY, 60, 18);
+            
+            // 帽子主体
+            g2d.setColor(new Color(200, 0, 0));
+            g2d.fillRoundRect(centerX - 25, startY + 5, 50, 25, 12, 12);
+            
+            // 帽子装饰
+            g2d.setColor(Color.YELLOW);
+            g2d.fillOval(centerX - 7, startY + 12, 14, 14);
+        }
     }
     
     /**
@@ -519,27 +775,39 @@ public class DuckComponent extends JComponent {
     }
     
     /**
-     * 绘制蝴蝶结
+     * ⚠️脆鼠修改：绘制蝴蝶结 - 软工思想：优先使用真实图片
+     * 好处：真实图片替代手绘，提升视觉效果
      */
     private void drawBowtie(Graphics2D g2d, int centerX, int startY) {
-        // 蝴蝶结左边
-        g2d.setColor(new Color(220, 20, 60)); // 猩红色
-        int[] leftBowX = {centerX - 12, centerX - 20, centerX - 12, centerX - 4};
-        int[] leftBowY = {startY, startY + 8, startY + 16, startY + 8};
-        g2d.fillPolygon(leftBowX, leftBowY, 4);
-        
-        // 蝴蝶结右边
-        int[] rightBowX = {centerX + 12, centerX + 20, centerX + 12, centerX + 4};
-        int[] rightBowY = {startY, startY + 8, startY + 16, startY + 8};
-        g2d.fillPolygon(rightBowX, rightBowY, 4);
-        
-        // 蝴蝶结中心
-        g2d.setColor(new Color(180, 0, 0));
-        g2d.fillOval(centerX - 5, startY + 6, 10, 8);
-        
-        // 添加高光效果
-        g2d.setColor(new Color(255, 100, 100, 150));
-        g2d.fillOval(centerX - 3, startY + 7, 3, 3);
+        // ⚠️脆鼠修改：优先使用真实蝴蝶结图片
+        if (clothingImagesLoaded && hudiejieImage != null) {
+            int bowWidth = hudiejieImage.getWidth(null);
+            int bowHeight = hudiejieImage.getHeight(null);
+            int bowX = centerX - bowWidth / 2;
+            int bowY = startY - 10; // 调整位置
+            
+            g2d.drawImage(hudiejieImage, bowX, bowY, null);
+        } else {
+            // ⚠️脆鼠修改：后备手绘方案
+            // 蝴蝶结左边
+            g2d.setColor(new Color(220, 20, 60)); // 猩红色
+            int[] leftBowX = {centerX - 12, centerX - 20, centerX - 12, centerX - 4};
+            int[] leftBowY = {startY, startY + 8, startY + 16, startY + 8};
+            g2d.fillPolygon(leftBowX, leftBowY, 4);
+            
+            // 蝴蝶结右边
+            int[] rightBowX = {centerX + 12, centerX + 20, centerX + 12, centerX + 4};
+            int[] rightBowY = {startY, startY + 8, startY + 16, startY + 8};
+            g2d.fillPolygon(rightBowX, rightBowY, 4);
+            
+            // 蝴蝶结中心
+            g2d.setColor(new Color(180, 0, 0));
+            g2d.fillOval(centerX - 5, startY + 6, 10, 8);
+            
+            // 添加高光效果
+            g2d.setColor(new Color(255, 100, 100, 150));
+            g2d.fillOval(centerX - 3, startY + 7, 3, 3);
+        }
     }
     
     /**
@@ -749,33 +1017,45 @@ public class DuckComponent extends JComponent {
     }
     
     /**
-     * 绘制背带裤
+     * ⚠️脆鼠修改：绘制背带裤 - 软工思想：优先使用真实图片
+     * 好处：真实图片替代手绘，提升视觉效果
      */
     private void drawOveralls(Graphics2D g2d, int centerX, int startY) {
-        // 背带裤主体
-        g2d.setColor(new Color(70, 130, 180)); // 钢蓝色背带裤
-        int[] overallsX = {centerX - 35, centerX - 40, centerX + 40, centerX + 35};
-        int[] overallsY = {startY, startY + 50, startY + 50, startY};
-        g2d.fillPolygon(overallsX, overallsY, 4);
-        
-        // 背带
-        g2d.setColor(new Color(50, 110, 160));
-        g2d.setStroke(new BasicStroke(6));
-        g2d.drawLine(centerX - 25, startY, centerX - 25, startY - 30);
-        g2d.drawLine(centerX + 25, startY, centerX + 25, startY - 30);
-        
-        // 肩带连接器
-        g2d.fillOval(centerX - 28, startY - 32, 6, 6);
-        g2d.fillOval(centerX + 22, startY - 32, 6, 6);
-        
-        // 裤腿
-        g2d.fillRoundRect(centerX - 30, startY + 50, 20, 30, 8, 8);
-        g2d.fillRoundRect(centerX + 10, startY + 50, 20, 30, 8, 8);
-        
-        // 背带扣
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.setStroke(new BasicStroke(2));
-        g2d.drawOval(centerX - 30, startY - 10, 10, 10);
-        g2d.drawOval(centerX + 20, startY - 10, 10, 10);
+        // ⚠️脆鼠修改：优先使用真实背带裤图片
+        if (clothingImagesLoaded && beidaikuImage != null) {
+            int beidaikuWidth = beidaikuImage.getWidth(null);
+            int beidaikuHeight = beidaikuImage.getHeight(null);
+            int beidaikuX = centerX - beidaikuWidth / 2;
+            int beidaikuY = startY + 20; // 调整位置到身体区域
+            
+            g2d.drawImage(beidaikuImage, beidaikuX, beidaikuY, null);
+        } else {
+            // ⚠️脆鼠修改：后备手绘方案
+            // 背带裤主体
+            g2d.setColor(new Color(70, 130, 180)); // 钢蓝色背带裤
+            int[] overallsX = {centerX - 35, centerX - 40, centerX + 40, centerX + 35};
+            int[] overallsY = {startY, startY + 50, startY + 50, startY};
+            g2d.fillPolygon(overallsX, overallsY, 4);
+            
+            // 背带
+            g2d.setColor(new Color(50, 110, 160));
+            g2d.setStroke(new BasicStroke(6));
+            g2d.drawLine(centerX - 25, startY, centerX - 25, startY - 30);
+            g2d.drawLine(centerX + 25, startY, centerX + 25, startY - 30);
+            
+            // 肩带连接器
+            g2d.fillOval(centerX - 28, startY - 32, 6, 6);
+            g2d.fillOval(centerX + 22, startY - 32, 6, 6);
+            
+            // 裤腿
+            g2d.fillRoundRect(centerX - 30, startY + 50, 20, 30, 8, 8);
+            g2d.fillRoundRect(centerX + 10, startY + 50, 20, 30, 8, 8);
+            
+            // 背带扣
+            g2d.setColor(new Color(200, 200, 200));
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawOval(centerX - 30, startY - 10, 10, 10);
+            g2d.drawOval(centerX + 20, startY - 10, 10, 10);
+        }
     }
 }

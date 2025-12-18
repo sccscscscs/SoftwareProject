@@ -165,7 +165,7 @@ public class RollCallServiceImpl implements RollCallService {
     public List<Session> getAllSessions() throws Exception {
         return sessionDao.findAll();
     }
-    
+
     // ⚠️脆鼠修改：添加缺失的方法实现
     private List<Student> selectStudents(List<Student> all, CallType callType, Integer selectedCount, StrategyType strategy) {
         // 简化的实现，实际应该根据策略选择学生

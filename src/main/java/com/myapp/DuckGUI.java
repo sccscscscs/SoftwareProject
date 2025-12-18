@@ -11,6 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.myapp.rollcall.ui.RollCallGUI;
+import com.myapp.duckbehavior.DuckBehaviorService;
+import com.myapp.duckbehavior.DuckRole;
+import javax.sound.sampled.*;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.Timer;
 
 /**
  * 唐老鸭和小鸭子应用主界面
@@ -138,35 +144,31 @@ public class DuckGUI extends JFrame {
         JPanel duckRowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0)); // 将间距从30减小到10
         duckRowPanel.setOpaque(false);
         
-        // 创建三只小鸭子
+        // ⚠️脆鼠修改：创建三只小鸭子，添加点击交互功能
         String[] duckNames = {"小鸭1号", "小鸭2号", "小鸭3号"};
         for (int i = 0; i < duckNames.length; i++) {
             DuckComponent duck = new DuckComponent(duckNames[i], false);
             duck.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            duck.setToolTipText("点击我可以换装打扮！");
+            duck.setToolTipText("点击我听叫声看动作！");
             final int index = i; // 保存索引用于事件处理
+            
+            // ⚠️脆鼠修改：添加小鸭子点击事件处理 - 声音播放 + 动画效果
             duck.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    // 取消之前选中鸭子的选中状态
-                    if (selectedDuck != null) {
-                        selectedDuck.setSelected(false);
-                    }
-                    // 设置当前鸭子为选中状态
-                    duck.setSelected(true);
-                    selectedDuck = duck;
-                    
-                    // 显示换装对话框
-                    showDressUpDialog(duck);
+                    // ⚠️脆鼠修改：处理小鸭子点击 - 调用后端服务获取行为和声音
+                    handleDuckClick(duck, duckNames[index]);
                 }
                 
                 @Override
                 public void mouseEntered(MouseEvent e) {
+                    // ⚠️脆鼠修改：鼠标悬停效果 - 添加发光边框提示可交互
                     duck.setBorder(BorderFactory.createLineBorder(new Color(255, 165, 0), 3));
                 }
                 
                 @Override
                 public void mouseExited(MouseEvent e) {
+                    // ⚠️脆鼠修改：鼠标离开效果 - 移除边框，保持选中状态
                     if (selectedDuck != duck) { // 如果不是当前选中的鸭子才移除边框
                         duck.setBorder(null);
                     }
@@ -644,6 +646,339 @@ public class DuckGUI extends JFrame {
         
         return panel;
     }
+    
+    /**
+     * ⚠️脆鼠修改：处理小鸭子点击事件 - 核心交互功能
+     * 集成后端行为服务，实现声音播放和动画效果，然后进入换装
+     * 采用异步处理确保UI响应性
+     * 
+     * @param duck 被点击的小鸭子组件
+     * @param duckName 小鸭子名称（用于显示信息）
+     */
+    private void handleDuckClick(DuckComponent duck, String duckName) {
+        // ⚠️脆鼠修改：使用SwingWorker进行异步处理 - 软工思想：异步编程模式
+        // 好处：避免UI阻塞，提升用户体验
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                try {
+                    // ⚠️脆鼠修改：调用后端服务获取鸭子行为 - 软工思想：分层架构
+                    // 好处：前后端分离，后端负责业务逻辑，前端负责展示
+                    DuckBehaviorService behaviorService = new DuckBehaviorService();
+                    DuckBehaviorService.DuckBehavior behavior = behaviorService.getBehavior(DuckRole.DUCKLING);
+                    
+                    // ⚠️脆鼠修改：根据声音类型设置情绪 - 软工思想：状态同步
+                    // 好处：声音和情绪状态保持一致，提升用户体验
+                    String emotionType = getEmotionFromSound(behavior.getSound());
+                    duck.setEmotion(emotionType);
+                    
+                    // ⚠️脆鼠修改：播放声音 - 软工思想：多线程处理
+                    // 好处：声音播放不阻塞UI线程
+                    playDuckSound(behavior);
+                    
+                    // ⚠️脆鼠修改：执行动画 - 软工思想：状态机模式
+                    // 好处：动画状态管理，确保动画流畅
+                    executeDuckAnimation(duck, behavior.getAction());
+                    
+                    // ⚠️脆鼠修改：等待动画完成后询问是否换装 - 软工思想：用户体验设计
+                    // 好处：动画作为过渡效果，然后询问用户是否换装
+                    Thread.sleep(1000); // 等待动画完成
+                    
+                    // ⚠️脆鼠修改：询问是否要进行换装 - 软工思想：用户决策权
+                    // 好处：给予用户选择权，提升用户体验
+                    SwingUtilities.invokeLater(() -> {
+                        // 设置当前选中的小鸭子
+                        if (selectedDuck != null) {
+                            selectedDuck.setSelected(false);
+                        }
+                        duck.setSelected(true);
+                        selectedDuck = duck;
+                        
+                        // 显示询问对话框
+                        int option = JOptionPane.showConfirmDialog(
+                                DuckGUI.this,
+                                "是否要进行换装？",
+                                "小鸭子互动",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+                        
+                        // 如果用户选择"是"，则进入换装界面
+                        if (option == JOptionPane.YES_OPTION) {
+                            showDressUpDialog(duck);
+                        }
+                    });
+                    
+                } catch (Exception e) {
+                    // ⚠️脆鼠修改：异常处理 - 软工思想：防御性编程
+                    // 好处：完善的异常处理，确保系统稳定性
+                    System.err.println("处理小鸭子点击时发生错误: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return null;
+            }
+            
+            @Override
+            protected void done() {
+                // ⚠️脆鼠修改：UI更新完成 - 软工思想：EDT线程安全
+                // 好处：确保UI更新在事件分发线程中执行
+                try {
+                    get(); // 检查是否有异常
+                } catch (Exception e) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(DuckGUI.this,
+                            "小鸭子互动失败：" + e.getMessage(),
+                            "错误",
+                            JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+            }
+        };
+        
+        worker.execute();
+    }
+    
+    /**
+     * ⚠️脆鼠修改：播放鸭子声音 - 软工思想：音频处理模块
+     * 
+     * @param behavior 鸭子行为对象，包含声音文件路径
+     */
+    private void playDuckSound(DuckBehaviorService.DuckBehavior behavior) {
+        try {
+            // ⚠️脆鼠修改：获取声音文件路径 - 软工思想：资源管理
+            // 好处：统一资源路径管理，便于维护
+            String soundPath = behavior.getSoundWavPath();
+            
+            // ⚠️脆鼠修改：检查音频文件存在性 - 软工思想：防御性编程
+            // 好处：避免文件不存在导致的异常
+            java.net.URL audioUrl = getClass().getResource(soundPath);
+            if (audioUrl == null) {
+                System.err.println("音频文件未找到: " + soundPath);
+                return;
+            }
+            
+            // ⚠️脆鼠修改：使用Java Sound API播放音频 - 软工思想：标准API使用
+            // 好处：使用Java标准音频API，确保跨平台兼容性
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioUrl);
+            AudioFormat format = audioStream.getFormat();
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            
+            Clip audioClip = (Clip) AudioSystem.getLine(info);
+            audioClip.open(audioStream);
+            
+            // ⚠️脆鼠修改：音频播放控制 - 软工思想：资源管理
+            // 好处：自动资源清理，防止内存泄漏
+            audioClip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP) {
+                    audioClip.close();
+                }
+                if (event.getType() == LineEvent.Type.CLOSE) {
+                    try {
+                        audioStream.close();
+                    } catch (IOException e) {
+                        System.err.println("关闭音频流时发生错误: " + e.getMessage());
+                    }
+                }
+            });
+            
+            // ⚠️脆鼠修改：开始播放音频
+            audioClip.start();
+            
+            // ⚠️脆鼠修改：2秒后停止播放声音
+            // 好处：限制声音播放时长，避免过长影响用户体验
+            Timer timer = new Timer(2000, e -> {
+                if (audioClip.isActive()) {
+                    audioClip.stop();
+                    audioClip.close();
+                }
+            });
+            timer.setRepeats(false);
+            timer.start();
+            
+        } catch (Exception e) {
+            // ⚠️脆鼠修改：音频播放异常处理 - 软工思想：优雅降级
+            // 好处：音频播放失败不影响其他功能
+            System.err.println("播放鸭子声音时发生错误: " + e.getMessage());
+            // 可以考虑添加备用的声音提示或视觉反馈
+        }
+    }
+    
+    /**
+     * ⚠️脆鼠修改：执行鸭子动画 - 软工思想：动画引擎设计
+     * 
+     * @param duck 鸭子组件
+     * @param action 动作类型
+     */
+    private void executeDuckAnimation(DuckComponent duck, com.myapp.duckbehavior.DuckAction action) {
+        // ⚠️脆鼠修改：在EDT线程中执行动画 - 软工思想：线程安全
+        // 好处：确保UI组件的线程安全访问
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // ⚠️脆鼠修改：根据动作类型执行不同动画 - 软工思想：策略模式
+                // 好处：每种动作对应特定的动画实现，便于扩展
+                switch (action) {
+                    case SHAKE:
+                        executeShakeAnimation(duck);
+                        break;
+                    case HOP:
+                        executeHopAnimation(duck);
+                        break;
+                    case SPIN:
+                        executeSpinAnimation(duck);
+                        break;
+                    case WAVE:
+                        executeWaveAnimation(duck);
+                        break;
+                    default:
+                        System.out.println("未实现的动作类型: " + action.getText());
+                        break;
+                }
+            } catch (Exception e) {
+                System.err.println("执行鸭子动画时发生错误: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    /**
+     * ⚠️脆鼠修改：执行摇晃动画 - 软工思想：动画算法实现
+     * 
+     * @param duck 鸭子组件
+     */
+    private void executeShakeAnimation(DuckComponent duck) {
+        // ⚠️脆鼠修改：使用Timer实现动画 - 软工思想：定时器模式
+        // 好处：使用Swing Timer确保动画的平滑性和线程安全
+        final int[] shakeCount = {0};
+        final int maxShakes = 6; // 摇晃次数
+        final int originalX = duck.getX();
+        final int originalY = duck.getY();
+        
+        Timer shakeTimer = new Timer(50, e -> {
+            int offset = (shakeCount[0] % 2 == 0) ? 5 : -5; // 左右交替偏移
+            duck.setLocation(originalX + offset, originalY);
+            shakeCount[0]++;
+            
+            if (shakeCount[0] >= maxShakes) {
+                // ⚠️脆鼠修改：动画结束恢复原位
+                duck.setLocation(originalX, originalY);
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        
+        shakeTimer.start();
+    }
+    
+    /**
+     * ⚠️脆鼠修改：执行跳跃动画 - 软工思想：物理动画模拟
+     * 
+     * @param duck 鸭子组件
+     */
+    private void executeHopAnimation(DuckComponent duck) {
+        final int originalY = duck.getY();
+        final int hopHeight = 20; // 跳跃高度
+        final int[] hopPhase = {0}; // 0=上升，1=下降
+        final int[] hopCount = {0};
+        final int maxHops = 6; // 动画帧数
+        
+        Timer hopTimer = new Timer(30, e -> {
+            if (hopPhase[0] == 0) {
+                // ⚠️脆鼠修改：上升阶段
+                int newY = originalY - (hopHeight * hopCount[0] / 3);
+                duck.setLocation(duck.getX(), newY);
+                
+                if (hopCount[0] >= 3) {
+                    hopPhase[0] = 1; // 切换到下降阶段
+                }
+            } else {
+                // ⚠️脆鼠修改：下降阶段
+                int newY = originalY - hopHeight + (hopHeight * (hopCount[0] - 3) / 3);
+                duck.setLocation(duck.getX(), newY);
+            }
+            
+            hopCount[0]++;
+            
+            if (hopCount[0] >= maxHops) {
+                // ⚠️脆鼠修改：动画结束恢复原位
+                duck.setLocation(duck.getX(), originalY);
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        
+        hopTimer.start();
+    }
+    
+    /**
+     * ⚠️脆鼠修改：执行旋转动画 - 软工思想：旋转变换
+     * 
+     * @param duck 鸭子组件
+     */
+    private void executeSpinAnimation(DuckComponent duck) {
+        final double[] rotationAngle = {0.0};
+        final double rotationStep = 15.0; // 每帧旋转角度
+        final int maxFrames = 24; // 旋转360度需要的帧数
+        
+        Timer spinTimer = new Timer(20, e -> {
+            // ⚠️脆鼠修改：使用AffineTransform实现旋转 - 软工思想：2D图形变换
+            // 好处：使用标准的2D变换API，确保旋转效果平滑
+            rotationAngle[0] += rotationStep;
+            
+            // ⚠️脆鼠修改：创建旋转变换
+            AffineTransform transform = new AffineTransform();
+            transform.rotate(Math.toRadians(rotationAngle[0]), 
+                          duck.getWidth() / 2.0, 
+                          duck.getHeight() / 2.0);
+            
+            // ⚠️脆鼠修改：应用变换到鸭子组件
+            // 注意：这里简化实现，实际可能需要更复杂的图形处理
+            duck.repaint(); // 触发重绘，在paintComponent中应用变换
+            
+            if (rotationAngle[0] >= 360.0) {
+                // ⚠️脆鼠修改：动画结束恢复原始状态
+                rotationAngle[0] = 0.0;
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        
+        spinTimer.start();
+    }
+    
+    /**
+     * ⚠️脆鼠修改：执行挥手动画 - 软工思想：复合动画
+     * 
+     * @param duck 鸭子组件
+     */
+    private void executeWaveAnimation(DuckComponent duck) {
+        // ⚠️脆鼠修改：挥手动画 = 小幅摇晃 + 视觉提示
+        executeShakeAnimation(duck);
+        
+        // ⚠️脆鼠修改：添加视觉提示
+        SwingUtilities.invokeLater(() -> {
+            // 可以在这里添加特殊的视觉效果，比如星星、音符等
+            duck.repaint();
+        });
+    }
+    
+    /**
+     * ⚠️脆鼠修改：从声音类型获取情绪 - 软工思想：状态映射
+     * 好处：建立声音和情绪的映射关系，确保状态一致性
+     * 
+     * @param sound 鸭子声音
+     * @return 对应的情绪类型：happy/sad/confident
+     */
+    private String getEmotionFromSound(com.myapp.duckbehavior.DuckSound sound) {
+        // ⚠️脆鼠修改：根据声音枚举映射情绪 - 软工思想：策略模式
+        // 好处：统一的状态映射逻辑，便于维护
+        if (sound == com.myapp.duckbehavior.DuckSound.DUCKLING_HAPPY) {
+            return "happy";
+        } else if (sound == com.myapp.duckbehavior.DuckSound.DUCKLING_SAD) {
+            return "sad";
+        } else if (sound == com.myapp.duckbehavior.DuckSound.DUCKLING_CONFIDENT) {
+            return "confident";
+        }
+        // ⚠️脆鼠修改：默认返回开心状态 - 软工思想：防御性编程
+        // 好处：确保总有返回值，避免空指针异常
+        return "happy";
+    }
+    
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

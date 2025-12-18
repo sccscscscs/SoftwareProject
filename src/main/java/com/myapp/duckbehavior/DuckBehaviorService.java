@@ -29,15 +29,17 @@ public class DuckBehaviorService {
         public String getActionText() { return action.getText(); }
     }
 
-    // 可按需要调整：不同角色的候选集合
+    // ⚠️脆鼠修改：可按需要调整：不同角色的候选集合 - 适配新的声音系统
     private static final List<DuckSound> DONALD_SOUNDS = List.of(
             DuckSound.DONALD_QUACK_1,
             DuckSound.DONALD_QUACK_2
     );
 
-    private static final List<DuckSound> DUCKLING_SOUNDS = List.of(
-            DuckSound.DUCKLING_QUACK_1,
-            DuckSound.DUCKLING_QUACK_2
+    // ⚠️脆鼠修改：小鸭子情绪声音集合 - 支持三种情绪状态
+    private static final List<DuckSound> DUCKLING_EMOTION_SOUNDS = List.of(
+            DuckSound.DUCKLING_HAPPY,
+            DuckSound.DUCKLING_SAD,
+            DuckSound.DUCKLING_CONFIDENT
     );
 
     // 行为：先优先给出你已经能做动画的两种（SHAKE/HOP）
@@ -62,7 +64,8 @@ public class DuckBehaviorService {
             sound = randomPick(DONALD_SOUNDS);
             action = randomPick(DONALD_ACTIONS);
         } else {
-            sound = randomPick(DUCKLING_SOUNDS);
+            // ⚠️脆鼠修改：使用新的情绪声音集合
+            sound = randomPick(DUCKLING_EMOTION_SOUNDS);
             action = randomPick(DUCKLING_ACTIONS);
         }
 
@@ -74,4 +77,3 @@ public class DuckBehaviorService {
         return list.get(idx);
     }
 }
-
