@@ -1,14 +1,20 @@
 package com.myapp;
 
-import javax.sound.sampled.*;
-import javax.swing.*;
 import java.io.IOException;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.Timer;
+
 import com.myapp.duckbehavior.DuckBehaviorService;
 import com.myapp.duckbehavior.DuckSound;
 
 //鸭子声音处理器
 public class DuckSoundHandler {
-    private final DuckGUI gui;
+private final DuckGUI gui;
     
     public DuckSoundHandler(DuckGUI gui) {
         this.gui = gui;
@@ -19,17 +25,17 @@ public class DuckSoundHandler {
         try {
             String soundPath = behavior.getSoundWavPath();
             java.net.URL audioUrl = getClass().getResource(soundPath);
-            
+
             if (audioUrl != null) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioUrl);
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioStream);
+                                AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioUrl);
+                                Clip clip = AudioSystem.getClip();
+                                clip.open(audioStream);
                 
                 //限制音频播放时长
                 clip.start();
                 
                 //设置2秒后自动停止音频
-                Timer timer = new Timer(2000, e -> { // 2秒后停止
+                Timer timer = new Timer(2000, e -> {                 // 2秒后停止
                     if (clip.isRunning()) {
                         clip.stop();
                     }

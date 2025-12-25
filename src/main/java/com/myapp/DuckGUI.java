@@ -317,7 +317,7 @@ public class DuckGUI extends JFrame {
         }
     }
     
-    //老鼠修改，处理用户请求，根据关键词识别用户意图并调用相应功能，采用策略模式处理不同类型的用户请求
+    //处理用户请求，根据关键词识别用户意图并调用相应功能，采用策略模式处理不同类型的用户请求
     private void processUserRequest(String request) {
         //添加更多关键词匹配
         if (request.contains("代码") || request.contains("统计")) {

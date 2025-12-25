@@ -26,12 +26,12 @@ public class DuckComponent extends JComponent {
     private final boolean isDonald;
     private final List<String> clothing = new ArrayList<>();
     private boolean isSelected = false; // 是否被选中（用于交互效果）
-    
+        
     //图片相关属性
     private Image duckImage; // 鸭子图片
     private boolean imageLoaded = false; // 图片是否成功加载
     
-    //添加小鸭子默认图片，小鸭子初始化时显示smallduck.png
+    //添加小鸭子默认图片smallduck.png
     private Image smallDuckImage; // 小鸭子默认图片
     
     //情绪状态相关属性
@@ -47,7 +47,6 @@ public class DuckComponent extends JComponent {
     private Timer animationTimer; // 动画计时器
     
     // 服装图片相关属性 
-    // 好处：支持真实服装图片显示，替代手绘
     private Image hatImage; // 帽子图片
     private Image hudiejieImage; // 蝴蝶结图片
     private Image dayiImage; // 大衣图片
@@ -61,7 +60,7 @@ public class DuckComponent extends JComponent {
     public static final String CATEGORY_SUMMER = "夏装";
     public static final String CATEGORY_ACCESSORY = "装饰";
     
-    //服装风格类型
+    //服装风格类型，但是最后应该没用到
     public static final String STYLE_CASUAL = "休闲装";
     public static final String STYLE_FORMAL = "正装";
     public static final String STYLE_SPORTS = "运动装";
@@ -523,7 +522,7 @@ public class DuckComponent extends JComponent {
         }
     }
     
-    //脆鼠修改：设置鸭子情绪
+    //设置鸭子情绪
     public void setEmotion(String emotion) {
         if (isDonald || !emotionImagesLoaded) {
             return; // 唐老鸭或图片未加载时不支持情绪切换
@@ -667,7 +666,7 @@ public class DuckComponent extends JComponent {
     public String getStyle() {
         return currentStyle;
     }
-    
+        
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -697,7 +696,6 @@ public class DuckComponent extends JComponent {
             // 绘制鸭子图片
             g2d.drawImage(duckImage, imageX, imageY, this);
         }
-        //删除后备手绘方案
         // 绘制配饰
         drawAccessories(g2d, centerX, isDonald ? 60 : 70);
         
@@ -735,15 +733,32 @@ public class DuckComponent extends JComponent {
             g2d.drawImage(dayiImage, dayiX, dayiY, null);
         }
         
-        if (clothing.contains("毛衣") && clothingImagesLoaded && maoyiImage != null) {
-            int maoyiWidth = maoyiImage.getWidth(null);
-            int maoyiHeight = maoyiImage.getHeight(null);
-            int maoyiX = centerX - maoyiWidth / 2;
-            int maoyiY = startY + 45; // 调整毛衣位置到身体
-            
-            g2d.drawImage(maoyiImage, maoyiX, maoyiY, null);
-        }
-        
+      if (clothing.contains("毛衣") && clothingImagesLoaded && maoyiImage != null) {
+    // 1. 获取原图尺寸
+    int originalWidth = maoyiImage.getWidth(null);
+    int originalHeight = maoyiImage.getHeight(null);
+
+    //
+    double scale = 2.0; 
+    int newWidth = (int) (originalWidth * scale);   // 注意：用double要强转int
+    int newHeight = (int) (originalHeight * scale);
+
+    // 3. 计算坐标
+    int maoyiX = centerX - newWidth / 2;
+
+    // Y轴计算
+    int originalY = startY + 45; 
+    int centerY = originalY + (originalHeight / 2);
+    
+    //再往下挪一点
+    int offsetDown = 15; 
+    
+    // 最终位置 = (居中位置) + (往下挪的距离)
+    int maoyiY = centerY - (newHeight / 2) + offsetDown;         
+
+    // 4. 绘制
+    g2d.drawImage(maoyiImage, maoyiX, maoyiY, newWidth, newHeight, null);
+}
         // 第二层：夏装（背带裤、明袍）
         if (clothing.contains("背带裤") && clothingImagesLoaded && beidaikuImage != null) {
             int beidaikuWidth = beidaikuImage.getWidth(null);
@@ -758,7 +773,7 @@ public class DuckComponent extends JComponent {
             int mingpaoWidth = mingpaoImage.getWidth(null);
             int mingpaoHeight = mingpaoImage.getHeight(null);
             int mingpaoX = centerX - mingpaoWidth / 2;
-            int mingpaoY = startY + 35; // 调整明袍位置到身体上部
+            int mingpaoY = startY + 55; // 调整明袍位置到身体上部
             
             g2d.drawImage(mingpaoImage, mingpaoX, mingpaoY, null);
         }

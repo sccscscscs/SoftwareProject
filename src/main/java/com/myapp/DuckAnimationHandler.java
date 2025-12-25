@@ -71,7 +71,7 @@ public class DuckAnimationHandler {
         final int hopSpeed = 30; // 跳跃速度（毫秒）
         
         Timer hopTimer = new Timer(hopSpeed, e -> {
-            // ⚠️脆鼠修改：实现上下跳跃效果 - 软工思想：抛物线动画
+// ⚠️脆鼠修改：实现上下跳跃效果 - 软工思想：抛物线动画
             // 好处：模拟真实的跳跃物理效果
             if (hopOffset[0] < maxHopHeight * 2) {
                 int offsetY = (int) (maxHopHeight * Math.sin(Math.PI * hopOffset[0] / (maxHopHeight * 2)));
@@ -88,7 +88,7 @@ public class DuckAnimationHandler {
         
         hopTimer.start();
     }
-    
+
     //执行旋转动画
     public void executeSpinAnimation(DuckComponent duck) {
         final double[] rotationAngle = {0.0};
@@ -118,7 +118,7 @@ public class DuckAnimationHandler {
         
         spinTimer.start();
     }
-    
+        
     //执行挥手动画
     public void executeWaveAnimation(DuckComponent duck) {
         // 挥手动画：小幅摇晃 +视觉提示
