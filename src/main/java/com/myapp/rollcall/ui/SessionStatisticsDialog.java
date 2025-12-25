@@ -9,7 +9,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.FileOutputStream;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -192,7 +191,7 @@ public class SessionStatisticsDialog extends JDialog {
         }
     }
     
-    // ⚠️脆鼠修改：实现Excel导出功能
+    //实现Excel导出功能
     private void exportToExcel(List<RollCallRecord> records, Session session) {
         try {
             JFileChooser fileChooser = new JFileChooser();

@@ -26,6 +26,12 @@ public class DuckComponent extends JComponent {
     private final boolean isDonald;
     private final List<String> clothing = new ArrayList<>();
     private boolean isSelected = false; // 是否被选中（用于交互效果）
+    
+    // 动画处理器引用
+    private DuckAnimationHandler animationHandler;
+    
+    // 声音处理器引用
+    private DuckSoundHandler soundHandler;
         
     //图片相关属性
     private Image duckImage; // 鸭子图片
@@ -60,7 +66,7 @@ public class DuckComponent extends JComponent {
     public static final String CATEGORY_SUMMER = "夏装";
     public static final String CATEGORY_ACCESSORY = "装饰";
     
-    //服装风格类型，但是最后应该没用到
+    //服装风格类型，但是最后应该没用到。。。
     public static final String STYLE_CASUAL = "休闲装";
     public static final String STYLE_FORMAL = "正装";
     public static final String STYLE_SPORTS = "运动装";
@@ -350,177 +356,20 @@ public class DuckComponent extends JComponent {
         Random random = new Random();
         String randomEmotion = emotions[random.nextInt(emotions.length)];
         
-        //设置情绪并播放声音
+        //设置情绪
         setEmotion(randomEmotion);
         
         //播放对应声音
-        playCorrespondingSound(randomEmotion);
+        if (soundHandler != null) {
+            soundHandler.playCorrespondingSound(randomEmotion);
+        }
         
-        //播放动画
-        playAnimationAndReturn(randomEmotion);
-    }
-    
-    //播放对应声音
-    private void playCorrespondingSound(String emotion) {
-        try {
-            String soundFile;
-            switch (emotion) {
-                case "happy":
-                    soundFile = "/sounds/happy.wav";
-                    break;
-                case "sad":
-                    soundFile = "/sounds/sad.wav";
-                    break;
-                case "confident":
-                    soundFile = "/sounds/confident.wav";
-                    break;
-                default:
-                    return; // 不播放声音
-            }
-            
-            java.net.URL soundUrl = getClass().getResource(soundFile);
-            if (soundUrl != null) {
-                javax.sound.sampled.AudioInputStream audioStream = javax.sound.sampled.AudioSystem.getAudioInputStream(soundUrl);
-                javax.sound.sampled.Clip clip = javax.sound.sampled.AudioSystem.getClip();
-                clip.open(audioStream);
-                clip.start();
-            }
-        } catch (Exception e) {
-            System.err.println("播放声音时发生错误: " + e.getMessage());
+        //使用DuckAnimationHandler播放动画
+        if (animationHandler != null) {
+            animationHandler.playAnimationAndReturn(this, randomEmotion, originalPosition);
         }
     }
     
-    //脆鼠修改：播放动画并返回
-    private void playAnimationAndReturn(String emotion) {
-        isAnimating = true;
-        
-        //根据情绪选择动画
-        switch (emotion) {
-            case "happy":
-                playHappyAnimation();
-                break;
-            case "sad":
-                playSadAnimation();
-                break;
-            case "confident":
-                playConfidentAnimation();
-                break;
-            default:
-                playHappyAnimation(); // 默认开心动画
-                break;
-        }
-    }
-    
-    //播放开心动画
-    private void playHappyAnimation() {
-        final int[] frameCount = {0};
-        final int maxFrames = 20;
-        
-        animationTimer = new Timer(50, e -> {
-            if (frameCount[0] < maxFrames) {
-                //上下跳跃效果
-                int offset = (int) (10 * Math.sin(Math.PI * frameCount[0] / 10));
-                setLocation(getX(), getY() + offset);
-                repaint();
-                frameCount[0]++;
-            } else {
-                //动画完成，返回原始状态
-                completeAnimationAndReturnToNormal();
-            }
-        });
-        
-        animationTimer.start();
-    }
-    
-    //播放伤心动画
-    private void playSadAnimation() {
-        final int[] frameCount = {0};
-        final int maxFrames = 15;
-        
-        animationTimer = new Timer(80, e -> {
-            if (frameCount[0] < maxFrames) {
-                //左右摇晃效果
-                int offset = (int) (8 * Math.sin(Math.PI * frameCount[0] / 3));
-                setLocation(getX() + offset, getY());
-                repaint();
-                frameCount[0]++;
-            } else {
-                //动画完成，返回原始状态
-                completeAnimationAndReturnToNormal();
-            }
-        });
-        
-        animationTimer.start();
-    }
-    
-    //播放自信动画
-    private void playConfidentAnimation() {
-        final int[] frameCount = {0};
-        final int maxFrames = 24;
-        
-        animationTimer = new Timer(30, e -> {
-            if (frameCount[0] < maxFrames) {
-                //原地旋转效果
-                setLocation(originalPosition); // 确保在原位置旋转
-                repaint();
-                frameCount[0]++;
-            } else {
-                // 动画完成，返回原始状态
-                completeAnimationAndReturnToNormal();
-            }
-        });
-        
-        animationTimer.start();
-    }
-    
-    //完成动画并返回正常状态
-    private void completeAnimationAndReturnToNormal() {
-        if (animationTimer != null) {
-            animationTimer.stop();
-            animationTimer = null;
-        }
-        
-        //返回原始位置
-        setLocation(originalPosition);
-        
-        //返回小鸭子默认图片
-        duckImage = smallDuckImage;
-        currentEmotion = "normal";
-        
-        isAnimating = false;
-        repaint();
-        
-        //询问是否换装
-        SwingUtilities.invokeLater(() -> {
-            showDressUpPrompt();
-        });
-    }
-    
-    //显示换装询问
-    private void showDressUpPrompt() {
-        int result = javax.swing.JOptionPane.showConfirmDialog(
-            this,
-            "要给" + name + "换装打扮吗？",
-            "换装询问",
-            javax.swing.JOptionPane.YES_NO_OPTION,
-            javax.swing.JOptionPane.QUESTION_MESSAGE
-        );
-        
-        if (result == javax.swing.JOptionPane.YES_OPTION) {
-            //触发换装对话框
-            SwingUtilities.invokeLater(() -> {
-                // 寻找父容器中的DuckGUI实例
-                java.awt.Container parent = getParent();
-                while (parent != null && !(parent instanceof DuckGUI)) {
-                    parent = parent.getParent();
-                }
-                
-                if (parent instanceof DuckGUI) {
-                    ((DuckGUI) parent).showDressUpDialog(this);
-                }
-            });
-        }
-    }
     
     //设置鸭子情绪
     public void setEmotion(String emotion) {
@@ -666,6 +515,34 @@ public class DuckComponent extends JComponent {
     public String getStyle() {
         return currentStyle;
     }
+    
+    //设置动画状态 - 供DuckAnimationHandler使用
+    public void setAnimating(boolean animating) {
+        this.isAnimating = animating;
+    }
+    
+    //设置为正常图片 - 供DuckAnimationHandler使用
+    public void setToNormalImage() {
+        if (smallDuckImage != null) {
+            duckImage = smallDuckImage;
+            currentEmotion = "normal";
+        }
+    }
+    
+    //获取原始位置 - 供DuckAnimationHandler使用
+    public Point getOriginalPosition() {
+        return originalPosition;
+    }
+    
+    //设置动画处理器
+    public void setAnimationHandler(DuckAnimationHandler animationHandler) {
+        this.animationHandler = animationHandler;
+    }
+    
+    //设置声音处理器
+    public void setSoundHandler(DuckSoundHandler soundHandler) {
+        this.soundHandler = soundHandler;
+    }
         
     @Override
     protected void paintComponent(Graphics g) {
@@ -740,7 +617,7 @@ public class DuckComponent extends JComponent {
 
     //
     double scale = 2.0; 
-    int newWidth = (int) (originalWidth * scale);   // 注意：用double要强转int
+    int newWidth = (int) (originalWidth * scale);   
     int newHeight = (int) (originalHeight * scale);
 
     // 3. 计算坐标
@@ -773,7 +650,7 @@ public class DuckComponent extends JComponent {
             int mingpaoWidth = mingpaoImage.getWidth(null);
             int mingpaoHeight = mingpaoImage.getHeight(null);
             int mingpaoX = centerX - mingpaoWidth / 2;
-            int mingpaoY = startY + 55; // 调整明袍位置到身体上部
+            int mingpaoY = startY + 65; // 调整明袍位置到身体上部
             
             g2d.drawImage(mingpaoImage, mingpaoX, mingpaoY, null);
         }
@@ -783,7 +660,7 @@ public class DuckComponent extends JComponent {
             int hatWidth = hatImage.getWidth(null);
             int hatHeight = hatImage.getHeight(null);
             int hatX = centerX - hatWidth / 2;
-            int hatY = startY - 30; // 调整帽子位置到头顶
+            int hatY = startY - 40; // 调整帽子位置到头顶
             
             g2d.drawImage(hatImage, hatX, hatY, null);
         }
@@ -792,7 +669,7 @@ public class DuckComponent extends JComponent {
             int bowWidth = hudiejieImage.getWidth(null);
             int bowHeight = hudiejieImage.getHeight(null);
             int bowX = centerX - bowWidth / 2;
-            int bowY = startY + 45; // 调整蝴蝶结位置到颈部
+            int bowY = startY + 30; // 调整蝴蝶结位置到颈部
             
             g2d.drawImage(hudiejieImage, bowX, bowY, null);
         }

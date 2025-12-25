@@ -7,14 +7,12 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -25,12 +23,7 @@ import com.myapp.rollcall.model.CallType;
 import com.myapp.rollcall.model.Session;
 import com.myapp.rollcall.model.StrategyType;
 import com.myapp.rollcall.service.RollCallService;
-
-/**
- * ⚠️脆鼠修改
- * 点名历史记录对话框
- * 展示所有历史点名会话列表，支持点击查看详细统计结果
- */
+//点名历史记录对话框
 public class SessionHistoryDialog extends JDialog {
     private RollCallService rollCallService;
     

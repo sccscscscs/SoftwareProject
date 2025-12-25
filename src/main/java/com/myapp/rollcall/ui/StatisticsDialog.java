@@ -31,25 +31,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.myapp.rollcall.model.StudentStatView;
 
-/**
- * ⚠️老鼠修改
- * 统计信息显示对话框类
- * 负责展示学生的考勤统计数据
- * 采用表格形式展示，支持数据排序和筛选
- */
+//统计信息显示对话框类，负责展示学生的考勤统计数，采用表格形式展示
 public class StatisticsDialog extends JDialog {
     
-    private List<StudentStatView> stats; // ⚠️脆鼠修改：保存统计数据以便导出
-    
-    /**
-     * ⚠️老鼠修改
-     * 构造函数，初始化统计对话框
-     * @param parent 父窗口
-     * @param stats 学生统计数据列表
-     */
+    private List<StudentStatView> stats; //保存统计数据以便导出
+    // 添加统计数据参数
     public StatisticsDialog(Dialog parent, List<StudentStatView> stats) {
         super(parent, "📊 考勤统计信息", true);
-        this.stats = stats; // ⚠️脆鼠修改：保存统计数据
+        this.stats = stats; //保存统计数据
         
         // 设置窗口属性
         setSize(800, 600);
@@ -61,12 +50,7 @@ public class StatisticsDialog extends JDialog {
         layoutComponents();
     }
     
-    /**
-     * ⚠️老鼠修改
-     * 初始化UI组件
-     * 创建表格模型并填充数据
-     * @param stats 统计数据
-     */
+    // 创建表格模型并填充数据
     private void initComponents(List<StudentStatView> stats) {
         // 创建表格模型
         String[] columnNames = {
@@ -134,7 +118,7 @@ public class StatisticsDialog extends JDialog {
         // 添加导出和关闭按钮
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
-        // ⚠️脆鼠修改：添加导出Excel按钮
+        //添加导出Excel按钮
         JButton exportButton = new JButton("导出为Excel");
         exportButton.setFont(new Font("微软雅黑", Font.BOLD, 14));
         exportButton.setBackground(new Color(76, 175, 80));
@@ -155,21 +139,13 @@ public class StatisticsDialog extends JDialog {
         add(mainPanel);
     }
     
-    /**
-     * ⚠️鼠修改
-     * 布局UI组件
-     * 使用BorderLayout进行整体布局
-     */
+    // 布局组件
     private void layoutComponents() {
         // 布局已在initComponents中完成
     }
     
-    /**
-     * ⚠️老鼠修改
-     * 计算出勤率
-     * @param stat 学生统计信息
-     * @return 出勤率百分比字符串
-     */
+
+    // 计算出勤率
     private String calculateAttendanceRate(StudentStatView stat) {
         if (stat.getTotalCalls() == 0) {
             return "0%";
@@ -180,13 +156,8 @@ public class StatisticsDialog extends JDialog {
         return String.format("%.1f%%", rate);
     }
     
-    /**
-     * ⚠️老鼠修改
-     * 创建统计摘要面板
-     * 显示整体的统计信息
-     * @param stats 统计数据列表
-     * @return 统计摘要面板
-     */
+
+    // 创建统计摘要面板
     private JPanel createSummaryPanel(List<StudentStatView> stats) {
         JPanel summaryPanel = new JPanel(new GridBagLayout());
         summaryPanel.setBorder(BorderFactory.createTitledBorder("统计摘要"));
@@ -247,7 +218,7 @@ public class StatisticsDialog extends JDialog {
         return summaryPanel;
     }
     
-    // ⚠️脆鼠修改：实现Excel导出功能
+    //实现Excel导出功能
     private void exportToExcel() {
         try {
             JFileChooser fileChooser = new JFileChooser();

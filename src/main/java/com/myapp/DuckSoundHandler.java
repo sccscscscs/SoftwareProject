@@ -65,4 +65,44 @@ private final DuckGUI gui;
         //默认返回开心状态
         return "happy";
     }
+    
+    //根据情绪播放对应声音 - 从DuckComponent移动过来的逻辑
+    public void playCorrespondingSound(String emotion) {
+        try {
+            String soundFile;
+            switch (emotion) {
+                case "happy":
+                    soundFile = "/sounds/happy.wav";
+                    break;
+                case "sad":
+                    soundFile = "/sounds/sad.wav";
+                    break;
+                case "confident":
+                    soundFile = "/sounds/confident.wav";
+                    break;
+                default:
+                    return; // 不播放声音
+            }
+            
+            java.net.URL soundUrl = getClass().getResource(soundFile);
+            if (soundUrl != null) {
+                javax.sound.sampled.AudioInputStream audioStream = javax.sound.sampled.AudioSystem.getAudioInputStream(soundUrl);
+                javax.sound.sampled.Clip clip = javax.sound.sampled.AudioSystem.getClip();
+                clip.open(audioStream);
+                clip.start();
+                
+                // 根据[多媒体播放时长控制规范](memory://project_specification/0cc37fa0-34b2-4aff-af16-ccacc70f862c)限制播放时长不超过2秒
+                Timer timer = new Timer(2000, e -> { // 2秒后自动停止
+                    if (clip.isRunning()) {
+                        clip.stop();
+                        clip.close();
+                    }
+                });
+                timer.setRepeats(false);
+                timer.start();
+            }
+        } catch (Exception e) {
+            System.err.println("播放声音时发生错误: " + e.getMessage());
+        }
+    }
 }

@@ -18,7 +18,7 @@ public class DuckGUI extends JFrame {
     private ExportHandler exportHandler;
     private DuckComponent selectedDuck = null; // 当前选中的小鸭子
     
-    // 将复杂功能拆分到专门的类中，提高可维护性
+    //复杂功能拆分到专门的类中，提高可维护性
     private DuckAnimationHandler animationHandler;
     private DuckSoundHandler soundHandler;
     private DuckEventHandler eventHandler;
@@ -179,6 +179,10 @@ public class DuckGUI extends JFrame {
         DuckComponent donaldDuck = new DuckComponent("唐老鸭", true);
         donaldDuck.setCursor(new Cursor(Cursor.HAND_CURSOR));
         donaldDuck.setToolTipText("点击我可以进行代码统计、玩红包雨游戏、AI对话！");
+        
+        // 设置处理器
+        donaldDuck.setAnimationHandler(animationHandler);
+        donaldDuck.setSoundHandler(soundHandler);
         donaldDuck.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -215,6 +219,11 @@ public class DuckGUI extends JFrame {
             DuckComponent duck = new DuckComponent(duckNames[i], false);
             duck.setCursor(new Cursor(Cursor.HAND_CURSOR));
             duck.setToolTipText("你要干啥！");
+            
+            // 设置处理器
+            duck.setAnimationHandler(animationHandler);
+            duck.setSoundHandler(soundHandler);
+            
             final int index = i; // 保存索引用于事件处理
             
             //添加小鸭子点击事件处理

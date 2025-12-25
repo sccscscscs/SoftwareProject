@@ -52,12 +52,7 @@ import com.myapp.rollcall.model.StudentStatView;
 import com.myapp.rollcall.service.NextCall;
 import com.myapp.rollcall.service.RollCallService;
 import com.myapp.rollcall.service.RollCallServiceImpl;
-
-/**
- * 点名系统主界面类
- * 负责点名流程的UI展示和用户交互
- * 采用MVC设计模式，将界面逻辑与业务逻辑分离
- */
+//采用MVC设计模式，将界面逻辑与业务逻辑分离
 public class RollCallGUI extends JDialog {
     private final RollCallService rollCallService;
     private long currentSessionId = -1;
@@ -75,10 +70,10 @@ public class RollCallGUI extends JDialog {
     private JButton absentButton;
     private JButton lateButton;
     private JButton viewStatsButton;
-    private JButton viewHistoryButton; // ⚠️脆鼠修改：添加查看历史记录按钮
+    private JButton viewHistoryButton; //添加查看历史记录按钮
     private JTextArea statusArea;
     
-    // ⚠️脆鼠修改：右上角菜单相关组件
+    //右上角菜单相关组件
     private JButton menuButton; // 菜单按钮（类似微信加号）
     private JPopupMenu menuPopup; // 弹出菜单
     
@@ -86,18 +81,15 @@ public class RollCallGUI extends JDialog {
     private boolean voiceEnabled = true;
     private JCheckBox voiceCheckBox;
     
-    // ⚠️脆鼠修改：历史记录相关组件
+    //历史记录相关组件
     private JPanel historyPanel;
     private JScrollPane historyScrollPanel;
     private JPanel historyCardPanel;
-    
-    /**
-     * 构造函数，初始化点名界面
-     * @param parent 父窗口
-     */
+
+    // 初始化界面
     public RollCallGUI(Frame parent) {
         super(parent, "📚 智能点名系统", true);
-        // ⚠️脆鼠修改：处理SQLException
+        //处理SQLException
         try {
             this.rollCallService = new RollCallServiceImpl();
         } catch (Exception e) {
@@ -115,14 +107,9 @@ public class RollCallGUI extends JDialog {
         layoutComponents();
         setupEventHandlers();
     }
-    
-    /**
-     * 初始化所有UI组件
-     * 采用现代化设计风格，提升用户体验
-     * 使用渐变色、圆角边框、阴影效果等视觉元素
-     */
+    // 初始化UI组件
     private void initComponents() {
-        // ⚠️脆鼠修改：定义现代化配色方案
+        //定义现代化配色方案
         Color primaryColor = new Color(52, 152, 219);      // 主色调 - 蓝色
         Color successColor = new Color(46, 204, 113);      // 成功色 - 绿色
         Color warningColor = new Color(241, 196, 15);      // 警告色 - 黄色
@@ -133,7 +120,7 @@ public class RollCallGUI extends JDialog {
         Color textPrimary = new Color(44, 62, 80);       // 主文本色
         Color textSecondary = new Color(108, 117, 125);    // 次要文本色
         
-        // ⚠️脆鼠修改：学生信息显示组件 - 使用卡片式设计
+        //学生信息显示组件 - 使用卡片式设计
         studentNameLabel = new JLabel("等待点名...", JLabel.CENTER);
         studentNameLabel.setFont(new Font("苹方-简 中等", Font.BOLD, 28));
         studentNameLabel.setForeground(textPrimary);
@@ -146,7 +133,7 @@ public class RollCallGUI extends JDialog {
         studentClassLabel.setFont(new Font("苹方-简 中等", Font.PLAIN, 16));
         studentClassLabel.setForeground(textSecondary);
         
-        // ⚠️脆鼠修改：照片显示区域 - 圆角边框，不显示默认文字
+        //照片显示区域 - 圆角边框，不显示默认文字
         photoLabel = new JLabel("", JLabel.CENTER);
         photoLabel.setPreferredSize(new Dimension(220, 220));
         photoLabel.setBorder(BorderFactory.createCompoundBorder(
@@ -155,11 +142,11 @@ public class RollCallGUI extends JDialog {
         ));
         photoLabel.setBackground(cardBg);
         photoLabel.setOpaque(true);
-        // ⚠️脆鼠修改：移除默认文字，只在照片加载失败时显示
+        //移除默认文字，只在照片加载失败时显示
         photoLabel.setFont(new Font("苹方-简 中等", Font.PLAIN, 14));
         photoLabel.setForeground(textSecondary);
         
-        // ⚠️脆鼠修改：控制按钮 - 现代化按钮设计，带圆角和悬停效果
+        //控制按钮 - 现代化按钮设计，带圆角和悬停效果
         startButton = createModernButton("🎯 开始点名", primaryColor, 16);
         
         attendButton = createModernButton("✅ 出勤", successColor, 14);
@@ -171,23 +158,23 @@ public class RollCallGUI extends JDialog {
         absentButton = createModernButton("❌ 旷课", dangerColor, 14);
         absentButton.setEnabled(false);
         
-        // ⚠️脆鼠修改：迟到按钮，特殊处理需要先标记旷课
+        //迟到按钮，特殊处理需要先标记旷课
         lateButton = createModernButton("⏰ 转为迟到", new Color(230, 126, 34), 14);
         lateButton.setEnabled(false);
         
         viewStatsButton = createModernButton("📊 查看统计", infoColor, 14);
         
-        // ⚠️脆鼠修改：初始化查看历史记录按钮
+        //初始化查看历史记录按钮
         viewHistoryButton = createModernButton("📝 查看点名历史", infoColor, 14);
         
-        // ⚠️脆鼠修改：语音播报选项 - 现代化复选框
+        //语音播报选项 - 现代化复选框
         voiceCheckBox = new JCheckBox("🔊 语音播报");
         voiceCheckBox.setFont(new Font("苹方-简 中等", Font.PLAIN, 14));
         voiceCheckBox.setSelected(voiceEnabled);
         voiceCheckBox.setBackground(cardBg);
         voiceCheckBox.setForeground(textPrimary);
         
-        // ⚠️脆鼠修改：历史记录显示区域 - 本次点名学生列表
+        //历史记录显示区域 - 本次点名学生列表
         statusArea = new JTextArea(8, 45);
         statusArea.setFont(new Font("JetBrains Mono", Font.PLAIN, 12));
         statusArea.setEditable(false);
@@ -200,30 +187,22 @@ public class RollCallGUI extends JDialog {
         statusArea.setLineWrap(true);
         statusArea.setWrapStyleWord(true);
         
-        // ⚠️脆鼠修改：新增历史记录面板 - 显示本次点名已点名学生
+        //新增历史记录面板 - 显示本次点名已点名学生
         historyPanel = new JPanel(new BorderLayout());
         historyPanel.setBorder(BorderFactory.createTitledBorder("本次点名记录"));
         historyScrollPanel = new JScrollPane(historyPanel);
         historyScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         historyScrollPanel.setPreferredSize(new Dimension(300, 400));
         
-        // ⚠️脆鼠修改：历史记录卡片面板，用于显示学生信息
+        //历史记录卡片面板，用于显示学生信息
         historyCardPanel = new JPanel();
         historyCardPanel.setLayout(new BoxLayout(historyCardPanel, BoxLayout.Y_AXIS));
         historyScrollPanel.setViewportView(historyCardPanel);
     }
-    
-    /**
-     * 创建现代化按钮
-     * 统一按钮样式，包含圆角、字体、颜色等属性
-     * @param text 按钮文本
-     * @param bgColor 背景颜色
-     * @param fontSize 字体大小
-     * @return 现代化按钮
-     */
+    //创建现代化按钮
     private JButton createModernButton(String text, Color bgColor, int fontSize) {
     JButton button = new JButton(text) {
-        // ⚠️ 添加：重写绘制方法，实现圆角
+        //重写绘制方法，实现圆角
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -249,11 +228,9 @@ public class RollCallGUI extends JDialog {
     return button;
 }
     
-    /**
-     * 布局UI组件
-     * 使用GridBagLayout实现灵活的响应式布局
-     */
-    private void layoutComponents() {
+  
+// 布局组件
+private void layoutComponents() {
         setLayout(new BorderLayout(10, 10));
         
         // 顶部面板 - 标题和控制
@@ -271,7 +248,7 @@ public class RollCallGUI extends JDialog {
         controlPanel.add(startButton);
         controlPanel.add(voiceCheckBox);
         controlPanel.add(viewStatsButton);
-        // ⚠️脆鼠修改：添加查看历史记录按钮
+        //添加查看历史记录按钮
         controlPanel.add(viewHistoryButton);
         topPanel.add(controlPanel, BorderLayout.CENTER);
         
@@ -281,44 +258,42 @@ public class RollCallGUI extends JDialog {
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // ⚠️脆鼠修改！：左侧面板 - 点名区，重新调整布局
+        //：左侧面板 - 点名区，重新调整布局
         JPanel leftPanel = new JPanel(new GridBagLayout());
         leftPanel.setBorder(BorderFactory.createTitledBorder("点名区"));
         GridBagConstraints gbc = new GridBagConstraints();
         
-        // ⚠️脆鼠修改！：照片放在上方，居中
+        //照片放在上方，居中
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2; // ⚠️脆鼠修改！：横跨两列
+        gbc.gridwidth = 2; //横跨两列
         gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.CENTER; // ⚠️脆鼠修改！：居中对齐
+        gbc.anchor = GridBagConstraints.CENTER; //居中对齐
         gbc.weightx = 1.0;
-        gbc.weighty = 0.7; // ⚠️脆鼠修改！：给照片区域更多垂直空间
-        gbc.fill = GridBagConstraints.NONE; // ⚠️脆鼠修改！：不拉伸，保持原始比例
+        gbc.weighty = 0.7; //给照片区域更多垂直空间
+        gbc.fill = GridBagConstraints.NONE; //不拉伸，保持原始比例
         gbc.insets = new Insets(10, 10, 10, 10);
         leftPanel.add(photoLabel, gbc);
         
-        // ⚠️脆鼠修改！：学生姓名放在照片下方，居中
+        //学生姓名放在照片下方，居中
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 2; // ⚠️脆鼠修改！：横跨两列
+        gbc.gridwidth = 2; //横跨两列
         gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.CENTER; // ⚠️脆鼠修改！：居中对齐
+        gbc.anchor = GridBagConstraints.CENTER; //居中对齐
         gbc.weightx = 1.0;
-        gbc.weighty = 0.15; // ⚠️脆鼠修改！：分配适当的垂直空间
-        gbc.fill = GridBagConstraints.HORIZONTAL; // ⚠️脆鼠修改！：水平填满
+        gbc.weighty = 0.15; //分配适当的垂直空间
+        gbc.fill = GridBagConstraints.HORIZONTAL; // 水平填满
         gbc.insets = new Insets(5, 10, 2, 10);
         leftPanel.add(studentNameLabel, gbc);
         
-        // ⚠️脆鼠修改！：学号放在姓名下方，居中
+        //学号放在姓名下方，居中
         gbc.gridy = 2;
-        gbc.weighty = 0.15; // ⚠️脆鼠修改！：分配适当的垂直空间
+        gbc.weighty = 0.15; //分配适当的垂直空间
         gbc.insets = new Insets(2, 10, 10, 10);
         leftPanel.add(studentIdLabel, gbc);
         
-        // ⚠️脆鼠修改！：班级信息暂时隐藏，因为界面空间有限
-        // 如果需要显示，可以考虑在详细信息中展示
-        //⚠️脆鼠修改
+       
         // 右侧面板 - 历史记录区
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createTitledBorder("历史记录区"));
@@ -329,7 +304,7 @@ public class RollCallGUI extends JDialog {
         convertPanel.add(lateButton);
         rightPanel.add(convertPanel, BorderLayout.NORTH);
         
-        // ⚠️脆鼠修改：使用新的历史记录面板显示本次点名学生
+        //使用新的历史记录面板显示本次点名学生
         rightPanel.add(historyScrollPanel, BorderLayout.CENTER);
         
         mainPanel.add(leftPanel);
@@ -352,11 +327,7 @@ public class RollCallGUI extends JDialog {
         
         add(bottomPanel, BorderLayout.SOUTH);
     }
-    
-    /**
-     * 设置事件处理器
-     * 采用事件驱动编程模式，实现用户交互响应
-     */
+    // 添加事件处理器
     private void setupEventHandlers() {
         // 开始点名按钮
         startButton.addActionListener(e -> {
@@ -376,7 +347,7 @@ public class RollCallGUI extends JDialog {
         // 查看统计按钮
         viewStatsButton.addActionListener(e -> showStatistics());
         
-        // ⚠️脆鼠修改：查看历史记录按钮
+        // 查看历史记录按钮
         viewHistoryButton.addActionListener(e -> showSessionHistory());
         
         // 语音播报选项
@@ -403,13 +374,7 @@ public class RollCallGUI extends JDialog {
             }
         });
     }
-    
-    /**
-     * 显示点名配置对话框
-     * 让用户选择点名方式、人数和策略
-     * 修复了全点时仍可选择策略和人数的问题
-     * 添加了自定义人数输入验证
-     */
+    // 显示点名配置对话框，修复逻辑问题，优化布局
     private void showRollCallConfigDialog() {
         JDialog configDialog = new JDialog(this, "点名配置", true);
         configDialog.setLayout(new GridBagLayout());
@@ -420,7 +385,7 @@ public class RollCallGUI extends JDialog {
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // 获取数据库中学生总数用于验证（添加默认值以防数据库访问失败）
+        // 获取数据库中学生总数用于验证
         final int[] totalStudentCountRef = new int[1]; 
         try {
             var studentDao = new com.myapp.rollcall.dao.StudentDao();
@@ -447,7 +412,7 @@ public class RollCallGUI extends JDialog {
         JLabel countLabel = new JLabel("抽点人数：");
         configDialog.add(countLabel, gbc);
 
-        // ⚠️脆鼠修改！：优化抽点人数选择面板布局，让自定义输入更明显
+        // 优化抽点人数选择面板布局，让自定义输入更明显
         JPanel countPanel = new JPanel(new BorderLayout(5, 0)); // ⚠️脆鼠修改！：使用BorderLayout让布局更清晰
         
         // 上半部分：固定选项
@@ -600,12 +565,7 @@ public class RollCallGUI extends JDialog {
         configDialog.setVisible(true);
     }
     
-    /**
-     * 开始点名流程
-     * @param callType 点名类型
-     * @param selectedCount 抽点人数
-     * @param strategy 点名策略
-     */
+    //开始点名流程
     private void startRollCall(CallType callType, Integer selectedCount, StrategyType strategy) throws Exception {
         currentSessionId = rollCallService.startSession(callType, selectedCount, strategy);
         isRollCalling.set(true);
@@ -652,19 +612,16 @@ public class RollCallGUI extends JDialog {
         
         statusArea.append("=== 点名结束 ===\n");
         
-        // ⚠️脆鼠修改：自动显示本次点名统计结果
+        // 自动显示本次点名统计结果
         showCurrentSessionStatistics();
         
-        // ⚠️脆鼠修改：清空历史记录面板
+        // 清空历史记录面板
         historyCardPanel.removeAll();
         historyCardPanel.revalidate();
         historyCardPanel.repaint();
     }
     
-    /**
-     * ⚠️脆鼠修改：新增功能
-     * 显示当前会话的统计结果
-     */
+   // 显示点名统计结果
     private void showCurrentSessionStatistics() {
         try {
             if (currentSessionId != -1) {
@@ -676,10 +633,8 @@ public class RollCallGUI extends JDialog {
         }
     }
     
-    /**
-     * 点名下一个学生
-     * 采用异步处理，避免UI阻塞
-     */
+   
+    // 异步处理
     private void nextStudent() {
         if (!isRollCalling.get()) return;
         
@@ -746,12 +701,7 @@ public class RollCallGUI extends JDialog {
         statusArea.append("正在点名：" + student.getName() + " (" + student.getStudentId() + ")\n");
     }
     
-    /**
-     * 标记考勤状态
-     * 增强记录显示，包含详细的时间戳和状态信息
-     * 迟到功能需要先标记为旷课，然后点击"转为迟到"按钮
-     * @param status 考勤状态
-     */
+
     private void markAttendance(AttendanceStatus status) {
         if (currentCall == null) return;
         
@@ -759,7 +709,7 @@ public class RollCallGUI extends JDialog {
             Timestamp responseTime = new Timestamp(System.currentTimeMillis());
             
             if (status == AttendanceStatus.LATE) {
-                // ⚠️脆鼠修改：迟到功能说明
+               
                 // 迟到需要先标记为旷课，然后点击"转为迟到"按钮
                 // 这里通过RecordDao直接检查当前记录状态，只有旷课状态才能转为迟到
                 try {
@@ -791,7 +741,7 @@ public class RollCallGUI extends JDialog {
             } else {
                 rollCallService.markStatus(currentCall.getRecordId(), status, responseTime);
                 
-                // ⚠️脆鼠修改：增强记录显示格式
+                //记录格式
                 String statusText = "";
                 switch (status) {
                     case ATTEND:
@@ -818,7 +768,7 @@ public class RollCallGUI extends JDialog {
                 statusArea.append(record);
             }
             
-            // ⚠️脆鼠修改：添加学生到历史记录面板
+            //添加学生到历史记录面板
             addStudentToHistoryPanel(currentCall.getStudent(), status);
             
             // 点名下一个学生（只有非迟到状态才继续）
@@ -830,10 +780,7 @@ public class RollCallGUI extends JDialog {
             JOptionPane.showMessageDialog(this, "标记考勤状态失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    /**
-     * 显示统计信息
-     */
+    //显示统计信息
     private void showStatistics() {
         try {
             List<StudentStatView> stats = rollCallService.getAllStudentStats();
@@ -843,11 +790,7 @@ public class RollCallGUI extends JDialog {
             JOptionPane.showMessageDialog(this, "获取统计信息失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    /**
-     * ⚠️脆鼠修改：新增功能
-     * 显示点名历史记录
-     */
+    //显示点名历史记录
     private void showSessionHistory() {
         try {
             SessionHistoryDialog dialog = new SessionHistoryDialog(this, rollCallService);
@@ -857,11 +800,7 @@ public class RollCallGUI extends JDialog {
         }
     }
     
-    /**
-     * 语音播报学生姓名
-     * 使用系统默认的语音合成功能
-     * @param name 学生姓名
-     */
+    //语音播报
     private void speakStudentName(String name) {
         // 在后台线程执行语音播报，避免阻塞UI
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
@@ -892,12 +831,8 @@ public class RollCallGUI extends JDialog {
         
         worker.execute();
     }
-    
-    /**
-     * 获取策略描述文本
-     * @param strategy 策略类型
-     * @return 策略描述
-     */
+
+    //获取文本
     private String getStrategyDescription(StrategyType strategy) {
         return switch (strategy) {
             case RANDOM -> "随机选择";
@@ -905,16 +840,10 @@ public class RollCallGUI extends JDialog {
             case LEAST_CALLED -> "优先选择点到次数最少的同学";
         };
     }
-    
-    /**
-     * ⚠️脆鼠修改：新增功能
-     * 添加学生到历史记录面板
-     * 根据考勤状态显示不同的颜色和按钮
-     * @param student 学生对象
-     * @param status 考勤状态
-     */
+
+    //添加学生到历史记录面板
     private void addStudentToHistoryPanel(Student student, AttendanceStatus status) {
-        // ⚠️脆鼠修改：创建学生卡片面板
+        // 创建学生卡片面板
         JPanel studentCard = new JPanel(new BorderLayout(10, 5));
         studentCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
@@ -930,7 +859,7 @@ public class RollCallGUI extends JDialog {
         JLabel nameLabel = new JLabel(student.getName() + " (" + student.getStudentId() + ")");
         nameLabel.setFont(new Font("苹方-简 中等", Font.BOLD, 14));
         
-        // ⚠️脆鼠修改：根据状态设置颜色
+        // 根据状态设置颜色
         switch (status) {
             case ATTEND:
                 // 出勤学生不显示（跳过）
@@ -939,7 +868,7 @@ public class RollCallGUI extends JDialog {
                 nameLabel.setForeground(Color.RED);
                 infoPanel.add(nameLabel);
                 
-                // ⚠️脆鼠修改：旷课学生添加转为迟到按钮
+                //旷课学生添加转为迟到按钮
                 JButton convertButton = new JButton("转为迟到");
                 convertButton.setFont(new Font("苹方-简 中等", Font.PLAIN, 12));
                 convertButton.setBackground(new Color(230, 126, 34));
@@ -948,7 +877,7 @@ public class RollCallGUI extends JDialog {
                 convertButton.setBorderPainted(false);
                 convertButton.setOpaque(true);
                 
-                // ⚠️脆鼠修改：转为迟到按钮事件
+                // 转为迟到按钮事件
                 convertButton.addActionListener(e -> {
                     try {
                         // 获取当前学生的最新记录
@@ -968,7 +897,7 @@ public class RollCallGUI extends JDialog {
                             Timestamp responseTime = new Timestamp(System.currentTimeMillis());
                             rollCallService.convertAbsentToLateIfWithin10Min(targetRecord.getRecordId(), responseTime);
                             
-                            // ⚠️脆鼠修改：更新历史记录显示
+                            //更新历史记录显示
                             nameLabel.setForeground(new Color(230, 126, 34)); // 橙色表示迟到
                             infoPanel.remove(convertButton);
                             infoPanel.add(new JLabel(" ⏰ 已转为迟到"));
@@ -1004,11 +933,11 @@ public class RollCallGUI extends JDialog {
         
         studentCard.add(infoPanel, BorderLayout.CENTER);
         
-        // ⚠️脆鼠修改：添加到历史记录面板
+        //添加到历史记录面板
         historyCardPanel.add(studentCard);
         historyCardPanel.add(Box.createVerticalStrut(5));
         
-        // ⚠️脆鼠修改：滚动到最新记录
+        //滚动到最新记录
         SwingUtilities.invokeLater(() -> {
             JScrollBar verticalScrollBar = historyScrollPanel.getVerticalScrollBar();
             verticalScrollBar.setValue(verticalScrollBar.getMaximum());
