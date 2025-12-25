@@ -14,14 +14,10 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-/**
- * ⚠️脆鼠修改：UI组件工厂类
- * 负责创建标准化的UI组件
- * 应用工厂模式，统一UI样式和设计规范
- */
+//UI组件工厂类
 public class UIComponentFactory {
     
-    // ⚠️脆鼠修改：定义现代化配色方案
+    //定义现代化配色方案
     public static final Color PRIMARY_COLOR = new Color(52, 152, 219);      // 主色调 - 蓝色
     public static final Color SUCCESS_COLOR = new Color(46, 204, 113);      // 成功色 - 绿色
     public static final Color WARNING_COLOR = new Color(241, 196, 15);      // 警告色 - 黄色
@@ -31,18 +27,10 @@ public class UIComponentFactory {
     public static final Color CARD_BG = new Color(255, 255, 255);         // 卡片背景
     public static final Color TEXT_PRIMARY = new Color(44, 62, 80);       // 主文本色
     public static final Color TEXT_SECONDARY = new Color(108, 117, 125);    // 次要文本色
-    
-    /**
-     * ⚠️脆鼠修改：创建现代化按钮
-     * 统一按钮样式，包含圆角、字体、颜色等属性
-     * @param text 按钮文本
-     * @param bgColor 背景颜色
-     * @param fontSize 字体大小
-     * @return 现代化按钮
-     */
+    // 创建现代化按钮
     public static JButton createModernButton(String text, Color bgColor, int fontSize) {
         JButton button = new JButton(text) {
-            // ⚠️脆鼠修改：重写绘制方法，实现圆角
+            //重写绘制方法，实现圆角
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -67,11 +55,7 @@ public class UIComponentFactory {
         
         return button;
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建菜单按钮（类似微信加号）
-     * @return 菜单按钮
-     */
+    // 创建菜单按钮
     public static JButton createMenuButton() {
         JButton menuButton = new JButton("+") {
             @Override
@@ -127,13 +111,7 @@ public class UIComponentFactory {
         
         return popup;
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建现代化复选框
-     * @param text 复选框文本
-     * @param selected 是否选中
-     * @return 现代化复选框
-     */
+    // 复选框样式
     public static JCheckBox createModernCheckBox(String text, boolean selected) {
         JCheckBox checkBox = new JCheckBox(text);
         checkBox.setFont(new Font("苹方-简 中等", Font.PLAIN, 14));
@@ -142,26 +120,14 @@ public class UIComponentFactory {
         checkBox.setForeground(TEXT_PRIMARY);
         return checkBox;
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建标题标签
-     * @param text 标题文本
-     * @return 标题标签
-     */
+    // 标题标签样式
     public static JLabel createTitleLabel(String text) {
         JLabel label = new JLabel(text, JLabel.CENTER);
         label.setFont(new Font("微软雅黑", Font.BOLD, 28));
         label.setForeground(new Color(0, 102, 204));
         return label;
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建学生信息标签
-     * @param text 标签文本
-     * @param fontSize 字体大小
-     * @param isBold 是否粗体
-     * @return 学生信息标签
-     */
+    // 创建学生信息标签
     public static JLabel createStudentLabel(String text, int fontSize, boolean isBold) {
         JLabel label = new JLabel(text, JLabel.CENTER);
         label.setFont(new Font("苹方-简 中等", isBold ? Font.BOLD : Font.PLAIN, fontSize));

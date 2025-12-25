@@ -605,7 +605,7 @@ public class DuckComponent extends JComponent {
             int dayiWidth = dayiImage.getWidth(null);
             int dayiHeight = dayiImage.getHeight(null);
             int dayiX = centerX - dayiWidth / 2;
-            int dayiY = startY + 40; // 调整大衣位置到身体上部
+            int dayiY = startY + 55; // 调整大衣位置到身体上部
             
             g2d.drawImage(dayiImage, dayiX, dayiY, null);
         }

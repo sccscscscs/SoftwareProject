@@ -3,7 +3,6 @@ package com.myapp;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
-import java.awt.Image;
 
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -212,12 +211,8 @@ public class DuckAnimationHandler {
         animationTimer.start();
     }
     
-    /**
-     * 播放动画并返回 - 根据情绪选择对应动画
-     * @param duck 鸭子组件
-     * @param emotion 情绪类型
-     * @param originalPosition 原始位置
-     */
+  
+    // 播放动画并返回
     public void playAnimationAndReturn(DuckComponent duck, String emotion, Point originalPosition) {
         // 标记正在动画
         duck.setAnimating(true);
@@ -238,13 +233,7 @@ public class DuckAnimationHandler {
                 break;
         }
     }
-    
-    /**
-     * 完成动画并返回正常状态
-     * @param duck 鸭子组件
-     * @param originalPosition 原始位置
-     * @param previousEmotion 之前的情绪
-     */
+    // 完成动画并返回正常状态
     public void completeAnimationAndReturnToNormal(DuckComponent duck, Point originalPosition, String previousEmotion) {
         //返回原始位置
         duck.setLocation(originalPosition);
@@ -265,11 +254,7 @@ public class DuckAnimationHandler {
             showDressUpPrompt(duck);
         });
     }
-    
-    /**
-     * 显示换装询问
-     * @param duck 鸭子组件
-     */
+    //显示换装询问
     private void showDressUpPrompt(DuckComponent duck) {
         int result = javax.swing.JOptionPane.showConfirmDialog(
             duck,

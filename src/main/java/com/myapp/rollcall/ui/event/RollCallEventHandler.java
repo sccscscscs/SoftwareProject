@@ -25,11 +25,7 @@ import com.myapp.rollcall.ui.SessionHistoryDialog;
 import com.myapp.rollcall.ui.SessionStatisticsDialog;
 import com.myapp.rollcall.ui.StatisticsDialog;
 
-/**
- * ⚠️脆鼠修改：点名事件处理器类
- * 负责处理所有用户交互事件
- * 应用事件驱动模式，将事件处理逻辑与UI展示分离
- */
+//事件驱动模式，UI事件处理器类
 public class RollCallEventHandler {
     
     private final RollCallService rollCallService;
@@ -38,7 +34,7 @@ public class RollCallEventHandler {
     private long currentSessionId = -1;
     private NextCall currentCall = null;
     
-    // ⚠️脆鼠修改：事件监听器接口
+    //事件监听器接口
     public interface RollCallUIController {
         void updateUIForRollCallStart();
         void updateUIForRollCallEnd();
@@ -56,10 +52,8 @@ public class RollCallEventHandler {
         this.uiController = uiController;
         this.isRollCalling = isRollCalling;
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建开始/结束点名按钮事件监听器
-     */
+
+    // 标记开始/结束点名按钮点击事件
     public ActionListener createStartEndButtonListener() {
         return e -> {
             if (!isRollCalling.get()) {
@@ -69,44 +63,30 @@ public class RollCallEventHandler {
             }
         };
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建考勤状态按钮事件监听器
-     */
+    // 标记考勤按钮点击事件
     public ActionListener createAttendanceButtonListener(AttendanceStatus status) {
         return e -> markAttendance(status);
     }
     
-    /**
-     * ⚠️脆鼠修改：创建查看统计按钮事件监听器
-     */
+   //查看统计按钮点击事件
     public ActionListener createStatsButtonListener() {
         return e -> showStatistics();
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建查看历史记录按钮事件监听器
-     */
+    //查看历史记录按钮点击事件
     public ActionListener createHistoryButtonListener() {
         return e -> showSessionHistory();
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建菜单按钮鼠标监听器
-     */
+    //菜单按钮点击事件
     public MouseAdapter createMenuButtonListener(JPopupMenu menuPopup) {
         return new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // ⚠️脆鼠修改：显示弹出菜单
+                //显示弹出菜单
                 menuPopup.show(e.getComponent(), e.getX(), e.getY());
             }
         };
     }
-    
-    /**
-     * ⚠️脆鼠修改：创建窗口关闭事件监听器
-     */
+    //窗口关闭事件
     public WindowAdapter createWindowCloseListener() {
         return new WindowAdapter() {
             @Override
@@ -128,53 +108,43 @@ public class RollCallEventHandler {
         };
     }
     
-    /**
-     * ⚠️脆鼠修改：开始点名流程
-     * @param callType 点名类型
-     * @param selectedCount 抽点人数
-     * @param strategy 点名策略
-     */
+
+    //开始点名流程
     public void startRollCall(CallType callType, Integer selectedCount, StrategyType strategy) throws Exception {
         currentSessionId = rollCallService.startSession(callType, selectedCount, strategy);
         isRollCalling.set(true);
         
-        // ⚠️脆鼠修改：更新UI状态
+        //更新UI状态
         uiController.updateUIForRollCallStart();
         
-        // ⚠️脆鼠修改：清空状态区域
+        //清空状态区域
         uiController.appendToStatusArea("=== 开始点名 ===\n");
         uiController.appendToStatusArea("点名类型：" + (callType == CallType.ALL ? "全点" : "抽点(" + selectedCount + "人)") + "\n");
         uiController.appendToStatusArea("点名策略：" + getStrategyDescription(strategy) + "\n");
         uiController.appendToStatusArea("开始时间：" + new Timestamp(System.currentTimeMillis()) + "\n\n");
         
-        // ⚠️脆鼠修改：开始点名流程
+        //开始点名流程
         nextStudent();
     }
-    
-    /**
-     * ⚠️脆鼠修改：结束点名流程
-     */
+    //结束点名流程
     private void endRollCall() {
         isRollCalling.set(false);
         currentSessionId = -1;
         currentCall = null;
         
-        // ⚠️脆鼠修改：更新UI状态
+        //更新UI状态
         uiController.updateUIForRollCallEnd();
         
         uiController.appendToStatusArea("=== 点名结束 ===\n");
         
-        // ⚠️脆鼠修改：自动显示本次点名统计结果
+        //自动显示本次点名统计结果
         showCurrentSessionStatistics();
         
-        // ⚠️脆鼠修改：清空历史记录面板
+        //清空历史记录面板
         uiController.clearHistoryPanel();
     }
-    
-    /**
-     * ⚠️脆鼠修改：点名下一个学生
-     * 采用异步处理，避免UI阻塞
-     */
+
+    // 获取下一个学生进行点名
     private void nextStudent() {
         if (!isRollCalling.get()) return;
         
@@ -212,12 +182,8 @@ public class RollCallEventHandler {
         worker.execute();
     }
     
-    /**
-     * ⚠️脆鼠修改：标记考勤状态
-     * 增强记录显示，包含详细的时间戳和状态信息
-     * 迟到功能需要先标记为旷课，然后点击"转为迟到"按钮
-     * @param status 考勤状态
-     */
+
+    // 标记考勤状态，增加参数
     private void markAttendance(AttendanceStatus status) {
         if (currentCall == null) return;
         
@@ -225,7 +191,7 @@ public class RollCallEventHandler {
             Timestamp responseTime = new Timestamp(System.currentTimeMillis());
             
             if (status == AttendanceStatus.LATE) {
-                // ⚠️脆鼠修改：迟到功能说明
+                // 迟到功能说明
                 // 迟到需要先标记为旷课，然后点击"转为迟到"按钮
                 // 这里通过RecordDao直接检查当前记录状态，只有旷课状态才能转为迟到
                 try {
@@ -243,7 +209,7 @@ public class RollCallEventHandler {
                         uiController.appendToStatusArea(record);
                     } else {
                         JOptionPane.showMessageDialog(null, 
-                            "⚠️ 迟到功能使用说明：\n" +
+                            "⚠️迟到功能使用说明：\n" +
                             "1. 先点击'旷课'按钮标记为旷课\n" +
                             "2. 然后点击'转为迟到'按钮转为迟到\n" +
                             "3. 只有在10分钟内才能转为迟到", 
@@ -257,7 +223,7 @@ public class RollCallEventHandler {
             } else {
                 rollCallService.markStatus(currentCall.getRecordId(), status, responseTime);
                 
-                // ⚠️脆鼠修改：增强记录显示格式
+                //增强记录显示格式
                 String statusText = "";
                 switch (status) {
                     case ATTEND:
@@ -284,7 +250,7 @@ public class RollCallEventHandler {
                 uiController.appendToStatusArea(record);
             }
             
-            // ⚠️脆鼠修改：添加学生到历史记录面板
+            //添加学生到历史记录面板
             uiController.addToHistoryPanel(currentCall.getStudent(), status);
             
             // 点名下一个学生（只有非迟到状态才继续）
@@ -297,9 +263,7 @@ public class RollCallEventHandler {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：显示统计信息
-     */
+    //显示统计信息
     private void showStatistics() {
         try {
             List<StudentStatView> stats = rollCallService.getAllStudentStats();
@@ -310,9 +274,7 @@ public class RollCallEventHandler {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：显示点名历史记录
-     */
+    //显示点名历史记录
     private void showSessionHistory() {
         try {
             SessionHistoryDialog dialog = new SessionHistoryDialog(null, rollCallService);
@@ -322,9 +284,7 @@ public class RollCallEventHandler {
         }
     }
     
-    /**
-     * ⚠️脆鼠修改：显示当前会话的统计结果
-     */
+    //显示统计结果
     private void showCurrentSessionStatistics() {
         try {
             if (currentSessionId != -1) {
@@ -335,12 +295,7 @@ public class RollCallEventHandler {
             JOptionPane.showMessageDialog(null, "获取点名统计失败：" + ex.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    /**
-     * ⚠️脆鼠修改：语音播报学生姓名
-     * 使用系统默认的语音合成功能
-     * @param name 学生姓名
-     */
+    // 使用系统默认的语音合成功能,添加学生到历史记录面板
     private void speakStudentName(String name) {
         // 在后台线程执行语音播报，避免阻塞UI
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
@@ -371,12 +326,7 @@ public class RollCallEventHandler {
         
         worker.execute();
     }
-    
-    /**
-     * ⚠️脆鼠修改：获取策略描述文本
-     * @param strategy 策略类型
-     * @return 策略描述
-     */
+    //获取策略描述文本
     private String getStrategyDescription(StrategyType strategy) {
         return switch (strategy) {
             case RANDOM -> "随机选择";
