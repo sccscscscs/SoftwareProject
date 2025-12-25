@@ -27,7 +27,7 @@ public class RedPacketRainGame extends JDialog {
     private static final int GAME_HEIGHT = 600;
     private static final int PLAYER_SIZE = 40;
     private static final int RED_PACKET_SIZE = 30;
-    private static final int GAME_DURATION = 10000; // 10秒
+    private static final int GAME_DURATION = 100000; // 10秒总时长
     
     private GamePanel gamePanel;
     private Timer gameTimer;
@@ -43,7 +43,7 @@ public class RedPacketRainGame extends JDialog {
     public RedPacketRainGame(JFrame parent) {
         super(parent, "红包雨游戏", true);
         setSize(GAME_WIDTH, GAME_HEIGHT);
-        setLocationRelativeTo(parent);
+        setLocationRelativeTo(parent);//居中
         setResizable(false);
         
         init();
