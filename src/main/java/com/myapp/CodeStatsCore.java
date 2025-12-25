@@ -18,7 +18,7 @@ public class CodeStatsCore {
         public int length;        // end - start + 1
         public boolean isMethod;
         public boolean isNested;
-        public boolean isAsync;
+        public boolean isAsync;//异步
 
         public FunctionStat(String filePath, String qualName, int startLine, int endLine,
                             boolean isMethod, boolean isNested, boolean isAsync) {
@@ -26,7 +26,7 @@ public class CodeStatsCore {
             this.qualName = qualName;
             this.startLine = startLine;
             this.endLine = endLine;
-            this.length = Math.max(0, endLine - startLine + 1);
+            this.length = Math.max(0, endLine - startLine + 1);//这里直接计算但判断一下
             this.isMethod = isMethod;
             this.isNested = isNested;
             this.isAsync = isAsync;
@@ -128,7 +128,7 @@ public class CodeStatsCore {
             List<Integer> lens = e.getValue().stream().map(f -> f.length).collect(Collectors.toList());
             Map<String, Object> one = new LinkedHashMap<>();
             one.put("summary", Summary.of(lens));
-            List<FunctionStat> sorted = new ArrayList<>(e.getValue());
+            List<FunctionStat> sorted = new ArrayList<>(e.getValue());//先看长函数，长函数更复杂
             sorted.sort(Comparator.<FunctionStat>comparingInt(f -> -f.length)
                     .thenComparingInt(f -> f.startLine));
             one.put("functions", sorted);
